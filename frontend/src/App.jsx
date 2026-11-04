@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { FloatingWhatsApp } from 'react-floating-whatsapp';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
+// import AnnouncementBar from './components/AnnouncementBar';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import CartDrawer from './components/CartDrawer';
+import ProductQuickView from './components/ProductQuickView';
+import Home from './pages/Home';
+import Policy from './pages/Policy';
+import Shop from './pages/Shop';
+import { CLIENT_INFO } from './data/products';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const { pathname } = useLocation();
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const isHomePage = pathname === '/';
+
+  const handleAddToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+    setIsCartOpen(true);
+  };
+
+  const updateQuantity = (id, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = item.quantity + delta;
+        return newQty > 0 ? { ...item, quantity: newQty } : null;
+      }
+      return item;
+    }).filter(Boolean));
+  };
+
+  const removeItem = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className={`min-vh-100 d-flex flex-column bg-light${isHomePage ? ' position-relative' : ''}`}>
+      {/* <AnnouncementBar /> */}
+      <Navbar
+        cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
+        setIsCartOpen={setIsCartOpen}
+        transparent={isHomePage}
+      />
 
-      <div className="ticks"></div>
+      <main className="flex-grow-1">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
+                onQuickView={setSelectedProduct}
+                onAddToCart={handleAddToCart}
+              />
+            }
+          />
+          <Route
+            path="/shop"
+            element={
+              <Shop
+                onQuickView={setSelectedProduct}
+                onAddToCart={handleAddToCart}
+              />
+            }
+          />
+          <Route path="/policy" element={<Policy />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <Footer />
+      <FloatingWhatsApp
+        phoneNumber={CLIENT_INFO.whatsappNumber.replace(/\D/g, '')}
+        accountName={CLIENT_INFO.name}
+        avatar="/apple-touch-icon.png"
+        chatMessage="Hi there! How can we help you?"
+        placeholder="Type a message..."
+        className="gold-threads-whatsapp"
+        allowClickAway
+        allowEsc
+      />
+      <ProductQuickView
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={handleAddToCart}
+      />
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        updateQuantity={updateQuantity}
+        removeItem={removeItem}
+      />
+    </div>
+  );
 }
-
-export default App
