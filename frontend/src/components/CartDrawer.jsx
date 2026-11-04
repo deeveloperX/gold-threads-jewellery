@@ -1,6 +1,17 @@
+import {
+  FiAlertCircle,
+  FiMinus,
+  FiPlus,
+  FiShoppingBag,
+  FiTrash2,
+  FiX,
+} from 'react-icons/fi';
+import { Link } from 'react-router';
+import { SiWhatsapp } from 'react-icons/si';
 import { CLIENT_INFO } from '../data/products';
 
 export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, removeItem }) {
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleWhatsAppCheckout = () => {
@@ -30,65 +41,105 @@ export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, remo
       }}
     >
       <div
-        className="cart-drawer-panel bg-white w-100 mw-md-400 p-4 d-flex flex-column h-100 shadow-lg"
-        style={{ maxWidth: '420px' }}
+        className="cart-drawer-panel bg-white w-100 d-flex flex-column h-100 shadow-lg"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
       >
-        
-        <div className="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-          <h5 className="fw-bold m-0" id="cart-drawer-title">
-            Your Shopping Bag ({cart.reduce((a, b) => a + b.quantity, 0)})
-          </h5>
-          <button className="btn-close" onClick={onClose} aria-label="Close cart"></button>
+        <div className="cart-drawer-header d-flex justify-content-between align-items-center">
+          <div>
+            <p className="luxury-subtitle mb-1">Your selection</p>
+            <h2 className="cart-drawer-title m-0" id="cart-drawer-title">
+              The Bag <span>({itemCount})</span>
+            </h2>
+          </div>
+          <button
+            className="cart-close-button d-flex align-items-center justify-content-center"
+            onClick={onClose}
+            aria-label="Close cart"
+          >
+            <FiX size={20} aria-hidden="true" />
+          </button>
         </div>
 
         {cart.length === 0 ? (
-          <div className="my-auto text-center py-5 text-muted">
-            <p className="fs-1 mb-2">🛍️</p>
-            <p className="fw-medium">Your cart is currently empty.</p>
+          <div className="cart-empty-state my-auto text-center px-4 py-5">
+            <FiShoppingBag className="cart-empty-icon mb-3" size={34} aria-hidden="true" />
+            <h3 className="h5 mb-2">Your bag is waiting</h3>
+            <p className="text-muted small mb-4">Discover a piece made to be treasured.</p>
+            <button className="btn btn-outline-dark rounded-pill px-4" onClick={onClose}>
+              Continue shopping
+            </button>
           </div>
         ) : (
-          <div className="flex-grow-1 overflow-auto pe-1">
+          <div className="cart-items flex-grow-1 overflow-auto">
             {cart.map((item) => (
-              <div key={item.id} className="d-flex gap-3 mb-3 pb-3 border-bottom align-items-center">
-                <img src={item.image} alt={item.name} className="rounded-3 object-fit-cover" style={{ width: '70px', height: '70px' }} />
-                <div className="flex-grow-1">
-                  <h6 className="fw-bold mb-1 fs-6">{item.name}</h6>
-                  <p className="small text-muted mb-2">PKR {item.price.toLocaleString()}</p>
-                  
-                  <div className="d-flex align-items-center gap-2">
-                    <button className="btn btn-sm btn-outline-secondary py-0 px-2" onClick={() => updateQuantity(item.id, -1)} aria-label={`Decrease ${item.name} quantity`}>-</button>
-                    <span className="fw-semibold small">{item.quantity}</span>
-                    <button className="btn-sm btn btn-outline-secondary py-0 px-2" onClick={() => updateQuantity(item.id, 1)} aria-label={`Increase ${item.name} quantity`}>+</button>
+              <article key={item.id} className="cart-item d-flex gap-3">
+                <img src={item.image} alt={item.name} className="cart-item-image object-fit-cover" />
+                <div className="cart-item-info flex-grow-1">
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                      <p className="cart-item-category mb-1">{item.category}</p>
+                      <h3 className="cart-item-name mb-2">{item.name}</h3>
+                    </div>
+                    <button
+                      className="cart-remove-button"
+                      onClick={() => removeItem(item.id)}
+                      aria-label={`Remove ${item.name} from cart`}
+                    >
+                      <FiTrash2 size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <p className="cart-item-price mb-3">PKR {item.price.toLocaleString()}</p>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="cart-quantity-control d-flex align-items-center">
+                      <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                        aria-label={`Decrease ${item.name} quantity`}
+                      >
+                        <FiMinus size={13} aria-hidden="true" />
+                      </button>
+                      <span aria-live="polite">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        aria-label={`Increase ${item.name} quantity`}
+                      >
+                        <FiPlus size={13} aria-hidden="true" />
+                      </button>
+                    </div>
+                    <span className="cart-item-total">
+                      PKR {(item.price * item.quantity).toLocaleString()}
+                    </span>
                   </div>
                 </div>
-                <button className="btn btn-sm text-danger border-0" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name} from cart`}>🗑️</button>
-              </div>
+              </article>
             ))}
           </div>
         )}
 
-        <div className="border-top pt-3 mt-auto">
-          <div className="d-flex justify-content-between fw-bold mb-2">
-            <span>Subtotal:</span>
-            <span className="text-dark">PKR {total.toLocaleString()}</span>
+        {cart.length > 0 && (
+          <div className="cart-drawer-footer">
+              <div className="cart-policy-note d-flex align-items-start gap-2">
+                <FiAlertCircle className="flex-shrink-0 mt-1" size={16} aria-hidden="true" />
+                <p className="small mb-0">
+                  Please note: <Link to="/policy" className="text-secondary">Review our return policy</Link> before ordering.
+                </p>
+              </div>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <span className="cart-subtotal-label">Subtotal</span>
+                <span className="cart-subtotal">PKR {total.toLocaleString()}</span>
+              </div>
+              <button
+                className="cart-checkout-button btn w-100 d-flex align-items-center justify-content-center gap-2"
+                onClick={handleWhatsAppCheckout}
+              >
+                <SiWhatsapp size={18} aria-hidden="true" />
+                Checkout on WhatsApp
+              </button>
+              <p className="cart-payment-note text-center mb-0 mt-2">Cash on delivery or card accepted</p>
           </div>
-
-          <div className="alert alert-warning py-2 px-3 small mb-3 border-warning border-opacity-25">
-            ⚠️ <strong>Notice:</strong> We have a strict <u>No Refund & No Return</u> policy.
-          </div>
-
-          <button 
-            className="btn btn-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 mb-2"
-            onClick={handleWhatsAppCheckout}
-            disabled={cart.length === 0}
-          >
-            <span>💬 Order via WhatsApp (COD / Card)</span>
-          </button>
-        </div>
-
+        )}
       </div>
     </div>
   );

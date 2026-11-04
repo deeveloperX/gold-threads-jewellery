@@ -12,7 +12,7 @@ export const PRODUCTS = [
     badge: "Bestseller",
     rating: 4.9,
     reviewsCount: 42,
-    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.48_PM_yhn2m5.jpg",
     description: "Elegant four-leaf clover motif crafted in premium 316L stainless steel with gold plating. Guaranteed zero color fading and 100% waterproof for everyday wear."
   },
   {
@@ -28,7 +28,7 @@ export const PRODUCTS = [
     badge: "Under 1300",
     rating: 4.8,
     reviewsCount: 31,
-    image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.51_PM_cizghl.jpg",
     description: "Bold Greek key pattern hoop earrings with high-polish gold finish. Hypoallergenic, lightweight, and waterproof."
   },
   {
@@ -44,7 +44,7 @@ export const PRODUCTS = [
     badge: "Trending",
     rating: 5.0,
     reviewsCount: 19,
-    image: "https://images.unsplash.com/photo-1611591475140-4987c4595e36?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.51_PM_2_wi7mvf.jpg",
     description: "Sleek hinged wrist bangle crafted for daily wear. Resists sweat, perfume, and water without turning black."
   },
   {
@@ -60,7 +60,7 @@ export const PRODUCTS = [
     badge: "Rs. 999 Special",
     rating: 4.7,
     reviewsCount: 28,
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.49_PM_r0slqn.jpg",
     description: "Dazzling solitaire crystal set in non-tarnish steel. Perfect everyday sparkle that lasts lifetime."
   },
   {
@@ -76,7 +76,7 @@ export const PRODUCTS = [
     badge: "New Arrival",
     rating: 4.9,
     reviewsCount: 15,
-    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.51_PM_cizghl.jpg",
     description: "Lustrous genuine freshwater pearls mounted on anti-tarnish gold wire. Classic elegance reimagined for daily wear."
   },
   {
@@ -92,7 +92,7 @@ export const PRODUCTS = [
     badge: "Popular",
     rating: 4.8,
     reviewsCount: 22,
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=800",
+    image: "https://res.cloudinary.com/t0bj48nm/image/upload/v1793777885/WhatsApp_Image_2026-11-02_at_7.37.51_PM_1_jgv44x.jpg",
     description: "Ultra-fine anklet chain with subtle droplet charms. Water-safe and tarnish-resistant for beach or daily wear."
   }
 ];

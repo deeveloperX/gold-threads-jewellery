@@ -1,53 +1,38 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { FloatingWhatsApp } from 'react-floating-whatsapp';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 // import AnnouncementBar from './components/AnnouncementBar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
-import ProductQuickView from './components/ProductQuickView';
 import Home from './pages/Home';
 import Policy from './pages/Policy';
 import Shop from './pages/Shop';
+import ProductDetails from './pages/ProductDetails';
+import Contact from './pages/Contact';
 import { CLIENT_INFO } from './data/products';
+import useCart from './hooks/useCart';
 
 export default function App() {
-  const { pathname } = useLocation();
-  const [cart, setCart] = useState([]);
+  const { pathname, search } = useLocation();
+  const { cart, itemCount, addToCart, updateQuantity, removeFromCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const isHomePage = pathname === '/';
 
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
+
   const handleAddToCart = (product) => {
-    setCart((prev) => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
+    addToCart(product);
     setIsCartOpen(true);
-  };
-
-  const updateQuantity = (id, delta) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQty = item.quantity + delta;
-        return newQty > 0 ? { ...item, quantity: newQty } : null;
-      }
-      return item;
-    }).filter(Boolean));
-  };
-
-  const removeItem = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
   };
 
   return (
     <div className={`min-vh-100 d-flex flex-column bg-light${isHomePage ? ' position-relative' : ''}`}>
       {/* <AnnouncementBar /> */}
       <Navbar
-        cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
+        cartCount={itemCount}
         setIsCartOpen={setIsCartOpen}
         transparent={isHomePage}
       />
@@ -56,23 +41,15 @@ export default function App() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Home
-                onQuickView={setSelectedProduct}
-                onAddToCart={handleAddToCart}
-              />
-            }
+            element={<Home />}
           />
+          <Route path="/shop" element={<Shop />} />
           <Route
-            path="/shop"
-            element={
-              <Shop
-                onQuickView={setSelectedProduct}
-                onAddToCart={handleAddToCart}
-              />
-            }
+            path="/product/:productId"
+            element={<ProductDetails onAddToCart={handleAddToCart} />}
           />
           <Route path="/policy" element={<Policy />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -88,17 +65,12 @@ export default function App() {
         allowClickAway
         allowEsc
       />
-      <ProductQuickView
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-      />
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cart={cart}
         updateQuantity={updateQuantity}
-        removeItem={removeItem}
+        removeItem={removeFromCart}
       />
     </div>
   );

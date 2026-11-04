@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiSearch, FiShoppingBag, FiMenu, FiX } from 'react-icons/fi';
+import { FiShoppingBag, FiMenu, FiX } from 'react-icons/fi';
 import { Link, NavLink } from 'react-router';
 
 export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = false }) {
@@ -28,7 +28,7 @@ export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = fal
               <NavLink
                 to="/"
                 end
-                className={({ isActive }) => `nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 ${isActive ? 'text-warning border-bottom border-warning' : 'text-light opacity-90'}`}
+                className="nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 text-light opacity-90"
                 style={{ fontFamily: "'Prata', serif", letterSpacing: '0.12em', fontSize: '0.85rem' }}
                 onClick={closeMobileMenu}
               >
@@ -38,7 +38,7 @@ export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = fal
             <li className="nav-item">
               <NavLink
                 to="/shop"
-                className={({ isActive }) => `nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 ${isActive ? 'text-warning border-bottom border-warning' : 'text-light opacity-90'}`}
+                className="nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 text-light opacity-90"
                 style={{ fontFamily: "'Prata', serif", letterSpacing: '0.12em', fontSize: '0.85rem' }}
                 onClick={closeMobileMenu}
               >
@@ -48,11 +48,21 @@ export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = fal
             <li className="nav-item">
               <NavLink
                 to="/policy"
-                className={({ isActive }) => `nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 ${isActive ? 'text-warning border-bottom border-warning' : 'text-light opacity-90'}`}
+                className="nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 text-light opacity-90"
                 style={{ fontFamily: "'Prata', serif", letterSpacing: '0.12em', fontSize: '0.85rem' }}
                 onClick={closeMobileMenu}
               >
                 Policies
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink
+                to="/contact"
+                className="nav-link p-0 text-decoration-none text-uppercase tracking-wider fs-7 text-light opacity-90"
+                style={{ fontFamily: "'Prata', serif", letterSpacing: '0.12em', fontSize: '0.85rem' }}
+                onClick={closeMobileMenu}
+              >
+                Contact
               </NavLink>
             </li>
           </ul>
@@ -60,7 +70,7 @@ export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = fal
 
         <Link to="/" className="navbar-logo text-center text-decoration-none" aria-label="Gold Threads Jewelers home">
           <span
-            className="d-block text-light fw-normal text-uppercase tracking-widest lh-1"
+            className="d-block text-light fw-bold text-uppercase tracking-widest lh-1"
             style={{ 
               fontFamily: "'Prata', serif", 
               fontSize: '1.2rem', 
@@ -71,22 +81,14 @@ export default function Navbar({ cartCount = 0, setIsCartOpen, transparent = fal
           </span>
           <small 
             className="d-block text-light opacity-50 tracking-widest text-uppercase"
-            style={{ fontSize: '0.55rem', letterSpacing: '0.35em', marginTop: '2px' }}
+            style={{ fontSize: '0.60rem', letterSpacing: '0.45em', marginTop: '2px' }}
           >
-            JEWELERS
+            JEWELLERY
           </small>
         </Link>
 
-        <div className="navbar-actions d-flex align-items-center gap-3 gap-lg-4">
-          <button 
-            className="btn btn-link text-light p-0 opacity-90 hover-opacity-100 transition"
-            title="Search"
-            aria-label="Search"
-            onClick={() => console.log('Open Search')}
-          >
-            <FiSearch size={20} />
-          </button>
-
+        <div className="navbar-actions">
+          
           <button 
             className="btn btn-link text-light p-0 position-relative opacity-90 hover-opacity-100 transition"
             title="Bag"

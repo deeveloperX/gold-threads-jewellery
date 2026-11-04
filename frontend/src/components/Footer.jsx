@@ -1,46 +1,77 @@
+import { FiArrowUpRight, FiInstagram, FiMapPin } from 'react-icons/fi';
+import { SiTiktok, SiWhatsapp } from 'react-icons/si';
 import { CLIENT_INFO } from '../data/products';
 import { Link } from 'react-router';
 
 export default function Footer() {
   return (
-    <footer className="bg-dark text-white-50 py-5 border-top border-warning border-opacity-25">
-      <div className="container">
-        <div className="row g-4 mb-4">
-          <div className="col-md-5">
-            <h4 className="fw-bold text-warning tracking-wider text-uppercase mb-2">GOLD THREADS</h4>
-            <p className="small me-md-4">
-              Timeless elegance for everyday wear. Premium designer-inspired stainless steel jewellery. 
-              Zero colour fading, 100% waterproof, and tarnish-resistant.
+    <footer className="store-footer mt-5">
+      <div className="container py-5">
+        <div className="row g-4 g-lg-5 pb-4">
+          <div className="col-lg-5 col-md-6">
+            <Link to="/" className="store-footer-brand d-inline-block text-decoration-none mb-3">
+              <span className="d-block">GOLD THREADS</span>
+              <small>JEWELLERY</small>
+            </Link>
+            <p className="store-footer-copy mb-4">
+              Timeless jewellery for everyday wear. Thoughtfully chosen pieces,
+              designed to be worn and treasured.
             </p>
-            <div className="d-flex gap-3 mt-3">
-              <a href="https://instagram.com/goldthreadsjewellery" target="_blank" rel="noreferrer" className="btn btn-outline-warning btn-sm rounded-pill px-3">
-                📸 Instagram
+            <div className="d-flex gap-2">
+              <a
+                href="https://instagram.com/goldthreadsjewellery"
+                target="_blank"
+                rel="noreferrer"
+                className="store-footer-social"
+                aria-label="Visit Gold Threads on Instagram"
+              >
+                <FiInstagram size={18} aria-hidden="true" />
               </a>
-              <a href={`https://wa.me/${CLIENT_INFO.whatsappNumber.replace('+', '')}`} target="_blank" rel="noreferrer" className="btn btn-outline-success btn-sm rounded-pill px-3">
-                💬 WhatsApp
+              <a
+                href={`https://wa.me/${CLIENT_INFO.whatsappNumber.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="store-footer-social"
+                aria-label="Message Gold Threads on WhatsApp"
+              >
+                <SiWhatsapp size={18} aria-hidden="true" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@goldthreadsjewellery/"
+                target="_blank"
+                rel="noreferrer"
+                className="store-footer-social"
+                aria-label="Visit Gold Threads on TikTok"
+              >
+                <SiTiktok size={17} aria-hidden="true" />
               </a>
             </div>
           </div>
 
-          <div className="col-md-3">
-            <h6 className="text-white fw-bold mb-3">Quick Links</h6>
-            <ul className="list-unstyled small d-grid gap-2">
-              <li><Link to="/" className="btn btn-link text-white-50 p-0 text-decoration-none">Home</Link></li>
-              <li><Link to="/shop" className="btn btn-link text-white-50 p-0 text-decoration-none">Shop Collection</Link></li>
-              <li><Link to="/policy" className="btn btn-link text-white-50 p-0 text-decoration-none">No Refund / Return Policy</Link></li>
+          <div className="col-6 col-lg-3 col-md-3">
+            <h2 className="store-footer-heading">Explore</h2>
+            <ul className="store-footer-links list-unstyled mb-0">
+              <li><Link to="/shop">Shop all jewellery</Link></li>
+              <li><Link to="/contact">Contact us</Link></li>
+              <li><Link to="/policy">Store policies</Link></li>
             </ul>
           </div>
 
-          <div className="col-md-4">
-            <h6 className="text-white fw-bold mb-3">Store Details</h6>
-            <p className="small mb-1">📍 Gulberg Lahore, Pakistan 54009</p>
-            <p className="small mb-1">🚚 Courier Delivery All Over Pakistan</p>
-            <p className="small mb-1">💳 Card & Cash on Delivery Accepted</p>
+          <div className="col-6 col-lg-4 col-md-3">
+            <h2 className="store-footer-heading">Visit & get in touch</h2>
+            <p className="store-footer-detail d-flex align-items-start gap-2 mb-2">
+              <FiMapPin className="mt-1 flex-shrink-0" size={15} aria-hidden="true" />
+              <span>{CLIENT_INFO.address}</span>
+            </p>
+            <Link to="/contact" className="store-footer-contact-link">
+              More contact details <FiArrowUpRight size={15} aria-hidden="true" />
+            </Link>
           </div>
         </div>
 
-        <div className="border-top border-secondary border-opacity-25 pt-3 text-center small">
-          © {new Date().getFullYear()} Gold Threads Jewellery. All Rights Reserved.
+        <div className="store-footer-bottom d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3">
+          <span>© {new Date().getFullYear()} Gold Threads Jewellery</span>
+          <span>Made to be treasured.</span>
         </div>
       </div>
     </footer>

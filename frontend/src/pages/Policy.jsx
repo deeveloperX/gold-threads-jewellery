@@ -1,47 +1,119 @@
+import {
+  FiAlertCircle,
+  FiCreditCard,
+  FiDroplet,
+  FiInstagram,
+  FiMapPin,
+  FiTruck,
+} from 'react-icons/fi';
+import { SiWhatsapp } from 'react-icons/si';
 import { CLIENT_INFO } from '../data/products';
+
+const policies = [
+  {
+    title: 'Delivery across Pakistan',
+    icon: FiTruck,
+    description: 'We deliver to cities and towns nationwide using local courier services.',
+    details: [
+      'Lahore, Karachi, and Islamabad: 2–4 working days.',
+      'Other regions: 3–5 working days.',
+    ],
+  },
+  {
+    title: 'Payment options',
+    icon: FiCreditCard,
+    description: 'Choose the payment option that works best for you.',
+    details: ['Cash on Delivery (COD)', 'Credit or debit card', 'Online Bank Tansfer'],
+  },
+  {
+    title: 'Everyday-ready jewellery',
+    icon: FiDroplet,
+    description:
+      'Our stainless steel pieces are designed to be waterproof and tarnish-resistant, with colour made to last.',
+    details: [],
+  },
+];
 
 export default function Policy() {
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8">
-          <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-            <h2 className="fw-bold text-dark border-bottom pb-3 mb-4">Store Policies & Customer Information</h2>
-            
-            <div className="alert alert-danger border-0 rounded-3 mb-4 p-3">
-              <h5 className="fw-bold mb-1">❌ No Refund & No Return Policy</h5>
-              <p className="mb-0 small">
-                All sales are final. We do not offer returns, exchanges, or cash refunds once an order has been dispatched and delivered. Please make sure to review product details, sizes, and images before placing your order.
-              </p>
-            </div>
+    <main className="store-policy">
+      <div className="container py-5">
+        <div className="mb-4">
+          <h1 className="fw-bold">Store Policies</h1>
+          <p className="text-muted mb-0">
+            Delivery, payment, and important information before you place an order.
+          </p>
+        </div>
 
-            <div className="mb-4">
-              <h5 className="fw-bold text-dark">🚚 Shipping & Delivery Across Pakistan</h5>
-              <p className="text-muted small">
-                We deliver nationwide to all major cities and towns in Pakistan. Orders are fulfilled via reliable local courier services.
+        <section className="store-policy-final-sale p-4 p-md-5 mb-4" aria-labelledby="final-sale-title">
+          <div className="d-flex align-items-start gap-3">
+            <FiAlertCircle className="store-policy-icon flex-shrink-0 mt-1" size={23} aria-hidden="true" />
+            <div>
+              <p className="luxury-subtitle mb-2">Please review before purchase</p>
+              <h2 className="h4 mb-3" id="final-sale-title">All sales are final</h2>
+              <p className="mb-0 text-secondary">
+                We do not offer returns, exchanges, or refunds once an order has been dispatched and delivered.
+                Please review the product description and images carefully before placing your order.
               </p>
-              <ul className="text-muted small">
-                <li><strong>Payment Options:</strong> Cash on Delivery (COD) & Credit/Debit Card payments.</li>
-                <li><strong>Delivery Timeline:</strong> 2 to 4 working days for Lahore, Karachi, Islamabad, and 3 to 5 days for other regions.</li>
-              </ul>
-            </div>
-
-            <div className="mb-4">
-              <h5 className="fw-bold text-dark">✨ Quality & Waterproof Guarantee</h5>
-              <p className="text-muted small">
-                Our designer stainless steel jewellery collection is specifically crafted to be 100% waterproof and anti-tarnish (does not turn black). Enjoy wearing your rings, bangles, and necklaces daily with zero color fading!
-              </p>
-            </div>
-
-            <div className="border-top pt-4 mt-2">
-              <h6 className="fw-bold text-dark mb-2">Need Assistance? Contact Us</h6>
-              <p className="small text-muted mb-1">📍 <strong>Address:</strong> {CLIENT_INFO.address}</p>
-              <p className="small text-muted mb-1">💬 <strong>WhatsApp:</strong> {CLIENT_INFO.whatsappFormatted}</p>
-              <p className="small text-muted">📸 <strong>Instagram:</strong> {CLIENT_INFO.handle}</p>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section className="row g-3 g-lg-4 mb-5" aria-label="Store policies">
+          {policies.map(({ title, icon: Icon, description, details }) => (
+            <div className="col-md-4" key={title}>
+              <article className="store-policy-card h-100 p-4">
+                <Icon className="store-policy-icon mb-3" size={24} aria-hidden="true" />
+                <h2 className="h5 mb-2">{title}</h2>
+                <p className="small text-secondary mb-3">{description}</p>
+                {details.length > 0 && (
+                  <ul className="store-policy-list small text-secondary mb-0">
+                    {details.map((detail) => <li key={detail}>{detail}</li>)}
+                  </ul>
+                )}
+              </article>
+            </div>
+          ))}
+        </section>
+
+        <section className="store-policy-contact p-4 p-md-5" aria-labelledby="contact-title">
+          <div className="row align-items-center g-4">
+            <div className="col-lg-7">
+              <p className="luxury-subtitle mb-2">We’re here to help</p>
+              <h2 className="h3 fw-normal mb-2" id="contact-title">Questions about an order?</h2>
+              <p className="text-secondary mb-0">
+                Reach out to us or visit us in Gulberg, Lahore. We’ll be happy to help.
+              </p>
+            </div>
+            <div className="col-lg-5">
+              <div className="d-flex flex-column gap-3">
+                <a
+                  className="store-policy-contact-link d-flex align-items-center gap-3"
+                  href={`https://wa.me/${CLIENT_INFO.whatsappNumber.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <SiWhatsapp size={19} aria-hidden="true" />
+                  <span>{CLIENT_INFO.whatsappFormatted}</span>
+                </a>
+                <a
+                  className="store-policy-contact-link d-flex align-items-center gap-3"
+                  href="https://instagram.com/goldthreadsjewellery"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FiInstagram size={19} aria-hidden="true" />
+                  <span>{CLIENT_INFO.handle}</span>
+                </a>
+                <p className="store-policy-contact-link d-flex align-items-center gap-3 mb-0">
+                  <FiMapPin size={19} aria-hidden="true" />
+                  <span>{CLIENT_INFO.address}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
