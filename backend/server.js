@@ -4,6 +4,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Gold Threads Jewellery API is running...");
