@@ -275,6 +275,48 @@
   gap: 17px;
 }
 
+.admin-account-name {
+  max-width: 150px;
+  overflow: hidden;
+  color: #77796f;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-logout-button {
+  display: inline-flex;
+  min-height: 31px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid #e8e6df;
+  border-radius: 4px;
+  background: #fff;
+  color: #686a62;
+  font-size: 9px;
+}
+
+.admin-logout-button:hover {
+  border-color: #d7d4ca;
+  background: #faf9f6;
+  color: #40433d;
+}
+
+.admin-logout-button > svg {
+  font-size: 12px;
+}
+
+.admin-logout-error {
+  margin: 12px 38px 0;
+  padding: 10px 12px;
+  border: 1px solid #ecd7d3;
+  border-radius: 4px;
+  background: #fcf3f1;
+  color: #985046;
+  font-size: 10px;
+}
+
 .admin-live-indicator {
   display: inline-flex;
   align-items: center;
@@ -1439,6 +1481,172 @@ button.admin-status-pill {
   color: var(--admin-green);
 }
 
+.admin-login-form {
+  display: grid;
+  width: 100%;
+  gap: 14px;
+  margin-top: 21px;
+  text-align: left;
+}
+
+.admin-login-field {
+  display: grid;
+  gap: 7px;
+  color: #55574f;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.admin-login-field > label {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.admin-login-field > input,
+.admin-password-input {
+  width: 100%;
+  height: 41px;
+  border: 1px solid #e6e4dd;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.admin-login-field > input,
+.admin-password-input > input {
+  padding: 0 11px;
+  color: #41433d;
+  font-size: 10px;
+}
+
+.admin-login-field > input:focus,
+.admin-password-input:focus-within {
+  border-color: #9aab98;
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(76, 115, 82, 0.1);
+}
+
+.admin-login-field > input::placeholder,
+.admin-password-input > input::placeholder {
+  color: #b1b1a9;
+}
+
+.admin-password-input {
+  display: flex;
+  align-items: center;
+}
+
+.admin-password-input > input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.admin-password-input > button {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #85867e;
+  font-size: 14px;
+}
+
+.admin-login-submit {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 3px;
+}
+
+.admin-login-submit:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.admin-login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ecd7d3;
+  border-radius: 4px;
+  background: #fcf3f1;
+  color: #985046;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.admin-login-error > svg {
+  flex: 0 0 13px;
+  margin-top: 1px;
+}
+
+.admin-login-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 18px;
+  color: #898a82;
+  font-size: 8px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.admin-login-security > svg {
+  flex: 0 0 12px;
+  margin-top: 1px;
+  color: #788c78;
+}
+
+.admin-auth-state {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  background: #f8f7f3;
+  color: #77796f;
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  text-align: center;
+}
+
+.admin-auth-state > svg {
+  color: #a3844b;
+  font-size: 24px;
+}
+
+.admin-auth-state h1 {
+  margin: 4px 0 0;
+  color: #33342f;
+  font-family: var(--font-heading, 'Prata', serif);
+  font-size: 23px;
+  font-weight: 400;
+}
+
+.admin-auth-state p {
+  max-width: 390px;
+  margin: 0 0 6px;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.admin-auth-spinner {
+  animation: admin-auth-spin 1s linear infinite;
+}
+
+@keyframes admin-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .admin-app :focus-visible,
 .admin-login-preview :focus-visible {
   outline: 2px solid #9aab98;
@@ -1516,6 +1724,11 @@ button.admin-status-pill {
   .admin-topbar-actions {
     margin-left: auto;
   }
+
+  .admin-logout-error {
+    margin-right: 25px;
+    margin-left: 25px;
+  }
 }
 
 @media (max-width: 680px) {
@@ -1535,6 +1748,29 @@ button.admin-status-pill {
     justify-content: center;
     gap: 4px;
     padding: 10px 15px;
+  }
+
+  .admin-account-name {
+    display: none;
+  }
+
+  .admin-topbar-actions {
+    gap: 9px;
+  }
+
+  .admin-logout-button {
+    width: 31px;
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .admin-logout-button > svg {
+    font-size: 13px;
+  }
+
+  .admin-logout-error {
+    margin: 10px 15px 0;
   }
 
   .admin-preview-notice {

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   FiAlertCircle,
   FiArchive,
-  FiArrowDownRight,
   FiArrowUpRight,
   FiBox,
   FiCheck,
@@ -16,13 +15,17 @@ import {
   FiMenu,
   FiPlus,
   FiSearch,
-  FiSettings,
   FiShield,
   FiTag,
   FiTrash2,
   FiX,
+  FiLogOut,
 } from 'react-icons/fi';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router';
+import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router';
+import { AdminAuthProvider } from './auth/AdminAuthContext';
+import ProtectedAdminRoute from './auth/ProtectedAdminRoute';
+import useAdminAuth from './auth/useAdminAuth';
+import AdminLogin from './pages/AdminLogin';
 import { formatPrice, initialCategories, initialProducts } from './adminData';
 import './admin.css';
 
@@ -30,7 +33,7 @@ const pageDetails = {
   '/admin': {
     eyebrow: 'YOUR STORE AT A GLANCE',
     title: 'Store overview',
-    description: 'A snapshot of your catalogue in this preview.',
+    description: 'A snapshot of your jewellery catalogue.',
   },
   '/admin/products': {
     eyebrow: 'CATALOGUE',
@@ -51,30 +54,48 @@ const navigation = [
 ];
 
 export default function AdminApp() {
+  return (
+    <AdminAuthProvider>
+      <AdminRoutes />
+    </AdminAuthProvider>
+  );
+}
+
+function AdminRoutes() {
+  const { pathname } = useLocation();
+  if (pathname === '/admin/login') {
+    return <AdminLogin />;
+  }
+  if (!pageDetails[pathname]) {
+    return <Navigate to="/admin" replace />;
+  }
+  return (
+    <ProtectedAdminRoute>
+      <AdminWorkspace />
+    </ProtectedAdminRoute>
+  );
+}
+
+function AdminWorkspace() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { admin, logout } = useAdminAuth();
   const [products, setProducts] = useState(initialProducts);
   const [categories, setCategories] = useState(initialCategories);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  if (pathname === '/admin/login') {
-    return <AdminPreviewLogin onContinue={() => navigate('/admin')} />;
-  }
+  const [logoutError, setLogoutError] = useState('');
 
   const page = pageDetails[pathname] ? pathname : '/admin';
   const activeProducts = products.filter((product) => product.isActive).length;
-  const previewNotice = (
-    <div className="admin-preview-notice" role="status">
-      <FiAlertCircle aria-hidden="true" />
-      <span>
-        <strong>Preview only</strong>
-        <span className="admin-preview-notice-copy">
-          Sample data only. Changes stay in this browser session; login and backend are not connected.
-        </span>
-      </span>
-      <span className="admin-preview-badge">NOT SECURED</span>
-    </div>
-  );
+  const handleLogout = async () => {
+    setLogoutError('');
+    try {
+      await logout();
+      navigate('/admin/login', { replace: true });
+    } catch (error) {
+      setLogoutError(error.message);
+    }
+  };
 
   return (
     <div className="admin-app">
@@ -109,7 +130,7 @@ export default function AdminApp() {
             <span className="admin-store-avatar">G</span>
             <span className="admin-store-copy">
               <strong>Gold Threads</strong>
-              <small>Store preview</small>
+              <small>Admin workspace</small>
             </span>
             <FiChevronDown aria-hidden="true" />
           </div>
@@ -147,13 +168,30 @@ export default function AdminApp() {
             <strong>{page === '/admin' ? 'Overview' : page.slice('/admin/'.length)}</strong>
           </div>
           <div className="admin-topbar-actions">
-            <span className="admin-live-indicator"><i /> Preview mode</span>
-            <span className="admin-avatar" aria-label="Admin profile">A</span>
+            <span className="admin-live-indicator"><i /> Signed in</span>
+            <span className="admin-account-name">{admin?.name || admin?.email}</span>
+            <span className="admin-avatar" aria-label={`Signed in as ${admin?.name || 'admin'}`}>
+              {(admin?.name || admin?.email || 'A').charAt(0).toUpperCase()}
+            </span>
+            <button type="button" className="admin-logout-button" onClick={handleLogout}>
+              <FiLogOut aria-hidden="true" /> Sign out
+            </button>
           </div>
         </header>
 
+        {logoutError && <div className="admin-logout-error" role="alert">{logoutError}</div>}
+
         <main className="admin-content">
-          {previewNotice}
+          <div className="admin-preview-notice" role="status">
+            <FiAlertCircle aria-hidden="true" />
+            <span>
+              <strong>Catalogue preview</strong>
+              <span className="admin-preview-notice-copy">
+                Product and category edits are still local-only; database integration is a separate step.
+              </span>
+            </span>
+            <span className="admin-preview-badge">DATA PREVIEW</span>
+          </div>
           <div className="admin-page-heading">
             <div>
               <span className="admin-eyebrow">{pageDetails[page].eyebrow}</span>
@@ -187,7 +225,7 @@ export default function AdminApp() {
         </main>
         <footer className="admin-footer">
           <span>Gold Threads Jewellery</span>
-          <span>Admin UI preview · Not connected to live store</span>
+          <span>Admin access secured · Catalogue integration pending</span>
         </footer>
       </div>
     </div>
@@ -761,25 +799,5 @@ function DialogActions({ onCancel, saveLabel }) {
       <button type="button" className="admin-secondary-button" onClick={onCancel}>Cancel</button>
       <button type="submit" className="admin-primary-button"><FiCheck aria-hidden="true" /> {saveLabel}</button>
     </div>
-  );
-}
-
-function AdminPreviewLogin({ onContinue }) {
-  return (
-    <main className="admin-login-preview">
-      <section className="admin-login-card">
-        <Link to="/" className="admin-login-brand">
-          <span className="admin-brand-mark">GT</span>
-          <span className="admin-brand-copy"><strong>GOLD THREADS</strong><small>JEWELLERY · ADMIN</small></span>
-        </Link>
-        <span className="admin-login-icon"><FiSettings aria-hidden="true" /></span>
-        <span className="admin-eyebrow">ADMIN ACCESS</span>
-        <h1>Login is coming next</h1>
-        <p>This UI preview does not include authentication. Secure admin login and route protection will be added in a separate implementation phase.</p>
-        <div className="admin-login-warning"><FiAlertCircle aria-hidden="true" /> Do not use this preview to manage live store data.</div>
-        <button type="button" className="admin-primary-button" onClick={onContinue}>Continue to UI preview <FiArrowDownRight aria-hidden="true" /></button>
-        <Link to="/" className="admin-login-back">Return to storefront</Link>
-      </section>
-    </main>
   );
 }
