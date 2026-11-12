@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FiAlertCircle,
   FiArchive,
@@ -20,13 +20,17 @@ import {
   FiTrash2,
   FiX,
   FiLogOut,
+  FiUpload,
 } from 'react-icons/fi';
 import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router';
 import { AdminAuthProvider } from './auth/AdminAuthContext';
 import ProtectedAdminRoute from './auth/ProtectedAdminRoute';
 import useAdminAuth from './auth/useAdminAuth';
 import AdminLogin from './pages/AdminLogin';
-import { formatPrice, initialCategories, initialProducts } from './adminData';
+import { categoryService } from '../services/categoryService';
+import { authService } from '../services/authService';
+import { productService } from '../services/productService';
+import { formatPrice } from './adminData';
 import './admin.css';
 
 const pageDetails = {
@@ -80,10 +84,39 @@ function AdminWorkspace() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { admin, logout } = useAdminAuth();
-  const [products, setProducts] = useState(initialProducts);
-  const [categories, setCategories] = useState(initialCategories);
+  const token = authService.getToken();
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
+  const [reloadCatalog, setReloadCatalog] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      productService.getAdminProducts(token),
+      categoryService.getCategories(),
+    ])
+      .then(([adminProducts, activeCategories]) => {
+        if (!active) return;
+        setProducts(adminProducts);
+        setCategories(activeCategories);
+        setCatalogError('');
+      })
+      .catch((error) => {
+        if (!active) return;
+        setCatalogError(error.message);
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [reloadCatalog, token]);
 
   const page = pageDetails[pathname] ? pathname : '/admin';
   const activeProducts = products.filter((product) => product.isActive).length;
@@ -185,12 +218,12 @@ function AdminWorkspace() {
           <div className="admin-preview-notice" role="status">
             <FiAlertCircle aria-hidden="true" />
             <span>
-              <strong>Catalogue preview</strong>
+              <strong>Connected catalogue</strong>
               <span className="admin-preview-notice-copy">
-                Product and category edits are still local-only; database integration is a separate step.
+                Catalogue data loads from your backend; image uploads are stored in Cloudinary.
               </span>
             </span>
-            <span className="admin-preview-badge">DATA PREVIEW</span>
+            <span className="admin-preview-badge">LIVE DATA</span>
           </div>
           <div className="admin-page-heading">
             <div>
@@ -200,26 +233,40 @@ function AdminWorkspace() {
             </div>
           </div>
 
-          {page === '/admin' && (
+          {catalogLoading ? (
+            <div className="admin-auth-state admin-catalog-state" aria-live="polite">
+              <span className="admin-auth-spinner" aria-hidden="true">◌</span>
+              <p>Loading your catalogue…</p>
+            </div>
+          ) : catalogError ? (
+            <div className="admin-catalog-error" role="alert">
+              <FiAlertCircle aria-hidden="true" />
+              <span><strong>Couldn’t load your catalogue</strong>{catalogError}</span>
+              <button type="button" className="admin-secondary-button" onClick={() => {
+                setCatalogLoading(true);
+                setReloadCatalog((current) => current + 1);
+              }}>Try again</button>
+            </div>
+          ) : page === '/admin' ? (
             <Dashboard
               products={products}
               categories={categories}
               activeProducts={activeProducts}
               onNavigate={navigate}
             />
-          )}
-          {page === '/admin/products' && (
+          ) : page === '/admin/products' ? (
             <ProductsPage
               products={products}
               categories={categories}
               onProductsChange={setProducts}
+              token={token}
             />
-          )}
-          {page === '/admin/categories' && (
+          ) : (
             <CategoriesPage
               categories={categories}
               products={products}
               onCategoriesChange={setCategories}
+              token={token}
             />
           )}
         </main>
@@ -249,7 +296,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
           icon={FiCheck}
           label="Active products"
           value={activeProducts}
-          meta="Visible in the preview"
+          meta="Visible in the storefront"
           tone="green"
         />
         <StatCard
@@ -297,7 +344,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
             {categories.slice(0, 5).map((category) => {
               const count = products.filter((product) => product.category === category.name).length;
               return (
-                <div className="admin-collection-row" key={category.id}>
+                <div className="admin-collection-row" key={category._id || category.id}>
                   <img src={category.imagePath} alt="" />
                   <span className="admin-collection-name">{category.name}</span>
                   <span className="admin-collection-count">{count} products</span>
@@ -317,7 +364,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
         <span className="admin-bottom-note-icon"><FiTag aria-hidden="true" /></span>
         <span>
           <strong>A lovely place to start</strong>
-          <small>Your storefront catalogue is ready to organize. Product edits here are preview-only.</small>
+          <small>Manage catalogue details and upload images directly from your device.</small>
         </span>
         <button type="button" className="admin-text-button" onClick={() => onNavigate('/admin/products')}>
           Manage products <FiArrowUpRight aria-hidden="true" />
@@ -340,34 +387,63 @@ function StatCard({ icon: Icon, label, value, meta, tone }) {
   );
 }
 
-function ProductsPage({ products, categories, onProductsChange }) {
+function ProductsPage({ products, categories, onProductsChange, token }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [editingProduct, setEditingProduct] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [actionError, setActionError] = useState('');
   const filteredProducts = useMemo(() => products.filter((product) => {
     const matchesSearch = `${product.name} ${product.category}`.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filter === 'all' || (filter === 'active' ? product.isActive : !product.isActive);
     return matchesSearch && matchesStatus;
   }), [filter, products, search]);
 
-  const saveProduct = (product) => {
+  const saveProduct = async (formData) => {
     if (editingProduct) {
-      onProductsChange((current) => current.map((item) => item.id === editingProduct.id ? { ...product, id: item.id } : item));
+      const saved = await productService.updateProduct(token, editingProduct._id || editingProduct.id, formData);
+      onProductsChange((current) => current.map((item) => (
+        (item._id || item.id) === (editingProduct._id || editingProduct.id) ? saved : item
+      )));
     } else {
-      onProductsChange((current) => [{ ...product, id: `preview-${Date.now()}` }, ...current]);
+      const saved = await productService.createProduct(token, formData);
+      onProductsChange((current) => [saved, ...current]);
     }
     setModalOpen(false);
   };
 
-  const toggleProduct = (product) => {
-    onProductsChange((current) => current.map((item) => item.id === product.id ? { ...item, isActive: !item.isActive } : item));
+  const toggleProduct = async (product) => {
+    setActionError('');
+    const formData = new FormData();
+    formData.set('isActive', String(!product.isActive));
+    try {
+      const saved = await productService.updateProduct(token, product._id || product.id, formData);
+      onProductsChange((current) => current.map((item) => (
+        (item._id || item.id) === (product._id || product.id) ? saved : item
+      )));
+    } catch (error) {
+      setActionError(error.message);
+    }
+  };
+
+  const deleteProduct = async (product) => {
+    setActionError('');
+    try {
+      await productService.deleteProduct(token, product._id || product.id);
+      onProductsChange((current) => current.filter((item) => (
+        (item._id || item.id) !== (product._id || product.id)
+      )));
+      setDeleteTarget(null);
+    } catch (error) {
+      setActionError(error.message);
+    }
   };
 
   return (
     <>
       <section className="admin-panel admin-table-panel">
+        {actionError && <p className="admin-form-error admin-page-error" role="alert">{actionError}</p>}
         <div className="admin-list-toolbar">
           <div className="admin-results-copy">
             <strong>All products</strong>
@@ -433,12 +509,9 @@ function ProductsPage({ products, categories, onProductsChange }) {
       {deleteTarget && (
         <ConfirmDialog
           title="Remove this product?"
-          description={`“${deleteTarget.name}” will be removed from this preview.`}
+          description={`“${deleteTarget.name}” will be permanently removed from your catalogue.`}
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => {
-            onProductsChange((current) => current.filter((product) => product.id !== deleteTarget.id));
-            setDeleteTarget(null);
-          }}
+          onConfirm={() => deleteProduct(deleteTarget)}
         />
       )}
     </>
@@ -460,7 +533,7 @@ function ProductTable({ products, compact = false, onEdit, onToggle, onDelete })
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id}>
+            <tr key={product._id || product.id}>
               <td>
                 <div className="admin-product-cell">
                   <img src={product.image} alt="" />
@@ -478,7 +551,7 @@ function ProductTable({ products, compact = false, onEdit, onToggle, onDelete })
                     type="button"
                     className={`admin-status-pill${product.isActive ? ' is-active' : ' is-inactive'}`}
                     onClick={() => onToggle(product)}
-                    aria-label={`Set ${product.name} ${product.isActive ? 'inactive' : 'active'} in preview`}
+                    aria-label={`Set ${product.name} ${product.isActive ? 'inactive' : 'active'}`}
                   >
                     <i /> {product.isActive ? 'Active' : 'Inactive'}
                   </button>
@@ -500,27 +573,50 @@ function ProductTable({ products, compact = false, onEdit, onToggle, onDelete })
   );
 }
 
-function CategoriesPage({ categories, products, onCategoriesChange }) {
+function CategoriesPage({ categories, products, onCategoriesChange, token }) {
   const [search, setSearch] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [actionError, setActionError] = useState('');
   const visibleCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const saveCategory = (category) => {
+  const saveCategory = async (formData) => {
     if (editingCategory) {
-      onCategoriesChange((current) => current.map((item) => item.id === editingCategory.id ? { ...category, id: item.id } : item));
+      const saved = await categoryService.updateCategory(
+        token,
+        editingCategory._id || editingCategory.id,
+        formData,
+      );
+      onCategoriesChange((current) => current.map((item) => (
+        (item._id || item.id) === (editingCategory._id || editingCategory.id) ? saved : item
+      )));
     } else {
-      onCategoriesChange((current) => [...current, { ...category, id: `category-${Date.now()}` }]);
+      const saved = await categoryService.createCategory(token, formData);
+      onCategoriesChange((current) => [...current, saved]);
     }
     setModalOpen(false);
+  };
+
+  const deleteCategory = async (category) => {
+    setActionError('');
+    try {
+      await categoryService.deleteCategory(token, category._id || category.id);
+      onCategoriesChange((current) => current.filter((item) => (
+        (item._id || item.id) !== (category._id || category.id)
+      )));
+      setDeleteTarget(null);
+    } catch (error) {
+      setActionError(error.message);
+    }
   };
 
   return (
     <>
       <section className="admin-panel admin-category-panel">
+        {actionError && <p className="admin-form-error admin-page-error" role="alert">{actionError}</p>}
         <div className="admin-list-toolbar">
           <div className="admin-results-copy">
             <strong>All categories</strong>
@@ -545,7 +641,7 @@ function CategoriesPage({ categories, products, onCategoriesChange }) {
             {visibleCategories.map((category) => {
               const count = products.filter((product) => product.category === category.name).length;
               return (
-                <article className="admin-category-card" key={category.id}>
+                <article className="admin-category-card" key={category._id || category.id}>
                   <div className="admin-category-image-wrap">
                     <img src={category.imagePath} alt="" />
                     <span className={`admin-status-pill${category.isActive ? ' is-active' : ' is-inactive'}`}>
@@ -579,22 +675,15 @@ function CategoriesPage({ categories, products, onCategoriesChange }) {
           </div>
         )}
       </section>
-      <div className="admin-category-tip">
-        <FiAlertCircle aria-hidden="true" />
-        <span>Changes made here are only kept in this preview and are not sent to your live store.</span>
-      </div>
       {modalOpen && (
         <CategoryDialog category={editingCategory} onClose={() => setModalOpen(false)} onSave={saveCategory} />
       )}
       {deleteTarget && (
         <ConfirmDialog
           title="Remove this category?"
-          description={`“${deleteTarget.name}” will be removed from this preview. Products in the collection are not changed.`}
+          description={`“${deleteTarget.name}” will be permanently removed from your categories. Products are not changed.`}
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => {
-            onCategoriesChange((current) => current.filter((category) => category.id !== deleteTarget.id));
-            setDeleteTarget(null);
-          }}
+          onConfirm={() => deleteCategory(deleteTarget)}
         />
       )}
     </>
@@ -607,28 +696,45 @@ function ProductDialog({ product, categories, onClose, onSave }) {
     category: product?.category ?? categories[0]?.name ?? '',
     price: product?.price ?? '',
     originalPrice: product?.originalPrice ?? '',
-    image: product?.image ?? '',
     badge: product?.badge ?? '',
     material: product?.material ?? '',
+    waterproof: product?.waterproof ?? true,
+    nonTarnish: product?.nonTarnish ?? true,
     description: product?.description ?? '',
     isActive: product?.isActive ?? true,
   }));
+  const [imageFile, setImageFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.category || !form.image.trim() || Number(form.price) <= 0) {
-      setError('Add a name, category, image URL, and a price greater than zero.');
+    if (!form.name.trim() || !form.category || Number(form.price) <= 0 || (!product && !imageFile)) {
+      setError('Add a name, category, price greater than zero, and an image.');
       return;
     }
-    onSave({
-      ...product,
-      ...form,
-      name: form.name.trim(),
-      price: Number(form.price),
-      originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
-    });
+    setError('');
+    setIsSaving(true);
+    const formData = new FormData();
+    formData.set('name', form.name.trim());
+    formData.set('category', form.category);
+    formData.set('price', String(form.price));
+    if (form.originalPrice !== '') formData.set('originalPrice', String(form.originalPrice));
+    formData.set('badge', form.badge);
+    formData.set('material', form.material);
+    formData.set('waterproof', String(form.waterproof));
+    formData.set('nonTarnish', String(form.nonTarnish));
+    formData.set('description', form.description);
+    formData.set('isActive', String(form.isActive));
+    if (imageFile) formData.set('image', imageFile);
+    try {
+      await onSave(formData);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -643,7 +749,13 @@ function ProductDialog({ product, categories, onClose, onSave }) {
           <div className="admin-form-field">
             <label htmlFor="product-category">Category</label>
             <select id="product-category" value={form.category} onChange={(event) => update('category', event.target.value)} required>
-              {categories.filter((category) => category.isActive).map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
+            {categories
+              .filter((category) => category.isActive || category.name === product?.category)
+              .map((category) => (
+                <option key={category._id || category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="admin-form-field">
@@ -664,26 +776,58 @@ function ProductDialog({ product, categories, onClose, onSave }) {
             <input id="product-original-price" type="number" min="0" value={form.originalPrice} onChange={(event) => update('originalPrice', event.target.value)} placeholder="Optional" />
           </div>
         </div>
-        <div className="admin-form-field">
-          <label htmlFor="product-image">Image URL</label>
-          <input id="product-image" type="url" value={form.image} onChange={(event) => update('image', event.target.value)} placeholder="https://..." required />
-          <small>Preview only. Image upload will be connected to the backend later.</small>
-        </div>
+        <ImageUploadField
+          id="product-image"
+          label="Product image"
+          currentImage={product?.image}
+          file={imageFile}
+          onFileChange={setImageFile}
+          required={!product}
+        />
         <div className="admin-form-row">
           <div className="admin-form-field">
             <label htmlFor="product-badge">Badge</label>
-            <input id="product-badge" value={form.badge} onChange={(event) => update('badge', event.target.value)} placeholder="New arrival" />
+            <input id="product-badge" value={form.badge} onChange={(event) => update('badge', event.target.value)} placeholder="e.g. Bestseller" />
+            <small>Optional label shown with this product in the admin catalogue.</small>
           </div>
           <div className="admin-form-field">
             <label htmlFor="product-material">Material</label>
             <input id="product-material" value={form.material} onChange={(event) => update('material', event.target.value)} placeholder="316L Stainless Steel" />
           </div>
         </div>
+        <div className="admin-form-row">
+          <div className="admin-form-field">
+            <label htmlFor="product-waterproof">Waterproof</label>
+            <select
+              id="product-waterproof"
+              value={String(form.waterproof)}
+              onChange={(event) => update('waterproof', event.target.value === 'true')}
+            >
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div className="admin-form-field">
+            <label htmlFor="product-non-tarnish">Non-tarnish</label>
+            <select
+              id="product-non-tarnish"
+              value={String(form.nonTarnish)}
+              onChange={(event) => update('nonTarnish', event.target.value === 'true')}
+            >
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
         <div className="admin-form-field">
           <label htmlFor="product-description">Description</label>
           <textarea id="product-description" rows="3" value={form.description} onChange={(event) => update('description', event.target.value)} placeholder="A short product description" />
         </div>
-        <DialogActions onCancel={onClose} saveLabel={product ? 'Save changes' : 'Add product'} />
+        <DialogActions
+          onCancel={onClose}
+          saveLabel={product ? 'Save changes' : 'Add product'}
+          isSaving={isSaving}
+        />
       </form>
     </DialogFrame>
   );
@@ -693,22 +837,38 @@ function CategoryDialog({ category, onClose, onSave }) {
   const [form, setForm] = useState(() => ({
     name: category?.name ?? '',
     slug: category?.slug ?? '',
-    imagePath: category?.imagePath ?? '',
     showPopular: category?.showPopular ?? false,
     isActive: category?.isActive ?? true,
     displayOrder: category?.displayOrder ?? 0,
   }));
+  const [imageFile, setImageFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.imagePath.trim()) {
-      setError('Add a category name and image URL to continue.');
+    if (!form.name.trim() || (!category && !imageFile)) {
+      setError('Add a category name and choose an image to continue.');
       return;
     }
+    setError('');
+    setIsSaving(true);
     const slug = (form.slug || form.name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    onSave({ ...category, ...form, name: form.name.trim(), slug, displayOrder: Number(form.displayOrder) });
+    const formData = new FormData();
+    formData.set('name', form.name.trim());
+    formData.set('slug', slug);
+    formData.set('showPopular', String(form.showPopular));
+    formData.set('isActive', String(form.isActive));
+    formData.set('displayOrder', String(form.displayOrder));
+    if (imageFile) formData.set('image', imageFile);
+    try {
+      await onSave(formData);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -723,11 +883,14 @@ function CategoryDialog({ category, onClose, onSave }) {
           <label htmlFor="category-slug">URL slug</label>
           <input id="category-slug" value={form.slug} onChange={(event) => update('slug', event.target.value)} placeholder="necklaces (generated from name if blank)" />
         </div>
-        <div className="admin-form-field">
-          <label htmlFor="category-image">Image URL</label>
-          <input id="category-image" type="url" value={form.imagePath} onChange={(event) => update('imagePath', event.target.value)} placeholder="https://..." required />
-          <small>Preview only. Image upload will be connected to the backend later.</small>
-        </div>
+        <ImageUploadField
+          id="category-image"
+          label="Category image"
+          currentImage={category?.imagePath}
+          file={imageFile}
+          onFileChange={setImageFile}
+          required={!category}
+        />
         <div className="admin-form-row">
           <div className="admin-form-field">
             <label htmlFor="category-order">Display order</label>
@@ -748,9 +911,49 @@ function CategoryDialog({ category, onClose, onSave }) {
             <small>Show it among popular collections on the storefront.</small>
           </span>
         </label>
-        <DialogActions onCancel={onClose} saveLabel={category ? 'Save changes' : 'Add category'} />
+        <DialogActions
+          onCancel={onClose}
+          saveLabel={category ? 'Save changes' : 'Add category'}
+          isSaving={isSaving}
+        />
       </form>
     </DialogFrame>
+  );
+}
+
+function ImageUploadField({ id, label, currentImage, file, onFileChange, required }) {
+  const [previewUrl, setPreviewUrl] = useState(currentImage || '');
+
+  useEffect(() => {
+    if (!previewUrl.startsWith('blob:')) return undefined;
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0] || null;
+    onFileChange(selectedFile);
+    setPreviewUrl(selectedFile ? URL.createObjectURL(selectedFile) : currentImage || '');
+  };
+
+  return (
+    <div className="admin-form-field">
+      <label htmlFor={id}>{label}</label>
+      {previewUrl && (
+        <img className="admin-image-upload-preview" src={previewUrl} alt={`${label} preview`} />
+      )}
+      <label className="admin-image-upload-control" htmlFor={id}>
+        <FiUpload aria-hidden="true" />
+        <span>{file ? file.name : currentImage ? 'Choose a new image' : 'Choose an image'}</span>
+        <input
+          id={id}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required={required}
+          onChange={handleFileChange}
+        />
+      </label>
+      <small>JPEG, PNG, or WebP. Images upload securely to the store’s Cloudinary account.</small>
+    </div>
   );
 }
 
@@ -782,7 +985,7 @@ function DialogFrame({ title, onClose, children, narrow = false }) {
       >
         <header className="admin-modal-header">
           <div>
-            <span className="admin-panel-kicker">PREVIEW ONLY</span>
+            <span className="admin-panel-kicker">CATALOGUE MANAGEMENT</span>
             <h2 id="admin-dialog-title">{title}</h2>
           </div>
           <button type="button" className="admin-icon-button" aria-label="Close dialog" onClick={onClose}><FiX /></button>
@@ -793,11 +996,14 @@ function DialogFrame({ title, onClose, children, narrow = false }) {
   );
 }
 
-function DialogActions({ onCancel, saveLabel }) {
+function DialogActions({ onCancel, saveLabel, isSaving = false }) {
   return (
     <div className="admin-dialog-actions">
-      <button type="button" className="admin-secondary-button" onClick={onCancel}>Cancel</button>
-      <button type="submit" className="admin-primary-button"><FiCheck aria-hidden="true" /> {saveLabel}</button>
+      <button type="button" className="admin-secondary-button" onClick={onCancel} disabled={isSaving}>Cancel</button>
+      <button type="submit" className="admin-primary-button" disabled={isSaving}>
+        {isSaving ? <span className="admin-auth-spinner" aria-hidden="true">◌</span> : <FiCheck aria-hidden="true" />}
+        {isSaving ? 'Uploading…' : saveLabel}
+      </button>
     </div>
   );
 }
