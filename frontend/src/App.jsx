@@ -5,6 +5,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import AdminApp from './admin/AdminApp';
+import AdminLogin from './admin/pages/AdminLogin';
+import { AdminAuthProvider } from './admin/auth/AdminAuthContext';
 import Home from './pages/Home';
 import Policy from './pages/Policy';
 import Shop from './pages/Shop';
@@ -16,6 +18,14 @@ import useCart from './hooks/useCart';
 export default function App() {
   return (
     <Routes>
+      <Route
+        path="/login"
+        element={(
+          <AdminAuthProvider>
+            <AdminLogin />
+          </AdminAuthProvider>
+        )}
+      />
       <Route path="/admin/*" element={<AdminApp />} />
       <Route path="/*" element={<Storefront />} />
     </Routes>
