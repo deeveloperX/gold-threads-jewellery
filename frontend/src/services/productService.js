@@ -1,6 +1,15 @@
 import { apiRequest } from './api';
 
 export const productService = {
+  getProducts({ category } = {}) {
+    const query = category ? `?${new URLSearchParams({ category })}` : '';
+    return apiRequest(`/products${query}`);
+  },
+
+  getProduct(id) {
+    return apiRequest(`/products/${encodeURIComponent(id)}`);
+  },
+
   getAdminProducts(token) {
     return apiRequest('/products/admin', { authToken: token });
   },

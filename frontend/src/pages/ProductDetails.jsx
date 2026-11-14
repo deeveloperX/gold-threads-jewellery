@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   FiArrowLeft,
   FiCreditCard,
@@ -8,23 +9,87 @@ import {
 } from 'react-icons/fi';
 import { Link, useParams } from 'react-router';
 import ProductCard from '../components/ProductCard';
-import { PRODUCTS } from '../data/products';
+import { productService } from '../services/productService';
 
 export default function ProductDetails({ onAddToCart }) {
   const { productId } = useParams();
-  const product = PRODUCTS.find((item) => item.id === Number(productId));
-  const relatedProducts = product
-    ? [
-        ...PRODUCTS.filter((item) => item.id !== product.id && item.category === product.category),
-        ...PRODUCTS.filter((item) => item.id !== product.id && item.category !== product.category),
-      ].slice(0, 3)
-    : [];
+  const [productData, setProductData] = useState({
+    productId: null,
+    loading: true,
+    product: null,
+    relatedProducts: [],
+    error: '',
+    relatedError: '',
+  });
 
-  if (!product) {
+  useEffect(() => {
+    let active = true;
+    productService.getProduct(productId)
+      .then((activeProduct) => {
+        if (!active) return;
+        setProductData({
+          productId,
+          loading: false,
+          product: activeProduct,
+          relatedProducts: [],
+          error: '',
+          relatedError: '',
+        });
+        productService.getProducts({ category: activeProduct.category })
+          .then((products) => {
+            if (active) {
+              setProductData((current) => current.productId === productId
+                ? {
+                    ...current,
+                    relatedProducts: products
+                      .filter((item) => item.id !== activeProduct.id)
+                      .slice(0, 3),
+                  }
+                : current);
+            }
+          })
+          .catch((requestError) => {
+            if (active) {
+              setProductData((current) => current.productId === productId
+                ? { ...current, relatedError: requestError.message }
+                : current);
+            }
+          });
+      })
+      .catch((requestError) => {
+        if (active) {
+          setProductData({
+            productId,
+            loading: false,
+            product: null,
+            relatedProducts: [],
+            error: requestError.status === 404 ? 'Product not found' : requestError.message,
+            relatedError: '',
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [productId]);
+
+  const isCurrentProduct = productData.productId === productId;
+  const loading = !isCurrentProduct || productData.loading;
+  const product = isCurrentProduct ? productData.product : null;
+  const relatedProducts = isCurrentProduct ? productData.relatedProducts : [];
+  const error = isCurrentProduct ? productData.error : '';
+  const relatedError = isCurrentProduct ? productData.relatedError : '';
+
+  if (loading) {
+    return <section className="container py-5 text-center" role="status">Loading product…</section>;
+  }
+
+  if (error || !product) {
     return (
       <section className="container py-5 text-center">
-        <h1 className="h2 mb-3">Product not found</h1>
-        <p className="text-muted mb-4">This piece may no longer be available.</p>
+        <h1 className="h2 mb-3">{error === 'Product not found' ? error : 'Could not load this product'}</h1>
+        <p className="text-muted mb-4">{error || 'This piece may no longer be available.'}</p>
         <Link to="/shop" className="btn btn-dark rounded-pill px-4">
           Return to Shop
         </Link>
@@ -167,6 +232,7 @@ export default function ProductDetails({ onAddToCart }) {
           </div>
         </section>
       )}
+      {relatedError && <p className="alert alert-danger mt-4" role="alert">Could not load related products: {relatedError}</p>}
     </section>
   );
 }

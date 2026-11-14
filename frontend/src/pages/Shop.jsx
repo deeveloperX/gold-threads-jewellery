@@ -1,18 +1,41 @@
+import { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import { PRODUCTS } from '../data/products';
 import { Link, useSearchParams } from 'react-router';
-
-const categories = [...new Set(PRODUCTS.map((product) => product.category))].map((name) => ({
-  name,
-  count: PRODUCTS.filter((product) => product.category === name).length,
-}));
+import { categoryService } from '../services/categoryService';
+import { productService } from '../services/productService';
 
 export default function Shop() {
   const [searchParams] = useSearchParams();
   const category = searchParams.get('category');
-  const products = category
-    ? PRODUCTS.filter((product) => product.category === category)
-    : PRODUCTS;
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([productService.getProducts(), categoryService.getCategories()])
+      .then(([activeProducts, activeCategories]) => {
+        if (!active) return;
+        setProducts(activeProducts);
+        setCategories(activeCategories);
+        setError('');
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categoryProducts = category
+    ? products.filter((product) => product.category === category)
+    : products;
 
   return (
     <section className="container py-5">
@@ -27,29 +50,32 @@ export default function Shop() {
           className={`shop-category-link ${!category ? 'active' : ''}`}
           aria-current={!category ? 'page' : undefined}
         >
-          All pieces <span>{PRODUCTS.length}</span>
+          All pieces <span>{products.length}</span>
         </Link>
-        {categories.map(({ name, count }) => (
+        {categories.map(({ name }) => (
           <Link
             key={name}
             to={`/shop?category=${encodeURIComponent(name)}`}
             className={`shop-category-link ${category === name ? 'active' : ''}`}
             aria-current={category === name ? 'page' : undefined}
           >
-            {name} <span>{count}</span>
+            {name} <span>{products.filter((product) => product.category === name).length}</span>
           </Link>
         ))}
       </nav>
 
+      {error && <p className="alert alert-danger" role="alert">Could not load the collection: {error}</p>}
+      {loading && <p className="text-center py-5" role="status">Loading jewellery…</p>}
+
       <div className="row g-4">
-        {products.map((product) => (
+        {!loading && !error && categoryProducts.map((product) => (
           <div key={product.id} className="col-lg-3 col-md-6">
             <ProductCard
               product={product}
             />
           </div>
         ))}
-        {products.length === 0 && (
+        {!loading && !error && categoryProducts.length === 0 && (
           <div className="col-12 py-5 text-center">
             <h2 className="h4">No pieces found in this collection</h2>
             <p className="text-muted">Choose another category to explore our jewellery.</p>

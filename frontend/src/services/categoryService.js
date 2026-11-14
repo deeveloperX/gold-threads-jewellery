@@ -5,6 +5,10 @@ export const categoryService = {
     return apiRequest('/categories');
   },
 
+  getPopularCategories() {
+    return apiRequest('/categories/popular');
+  },
+
   createCategory(token, category) {
     return apiRequest('/categories', {
       method: 'POST',
