@@ -3,6 +3,7 @@ import {
   FiArrowLeft,
   FiCreditCard,
   FiDroplet,
+  FiGift,
   FiShoppingBag,
   FiShield,
   FiTruck,
@@ -144,6 +145,11 @@ export default function ProductDetails({ onAddToCart }) {
             </div>
 
             <p className="text-secondary lh-lg mb-4">{product.description}</p>
+
+            <p className="small text-muted d-flex align-items-start gap-2 mb-4">
+              <FiGift className="brand-gold-color flex-shrink-0" aria-hidden="true" />
+              <span>Free gift packaging is included in the product price, with extra charge.</span>
+            </p>
 
             <button
               type="button"

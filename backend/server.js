@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
 require("dotenv").config();
 const connectDB = require("./config/db");
 
@@ -17,6 +18,25 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+
+  console.error("API request failed:", error);
+  if (error instanceof multer.MulterError) {
+    const message = error.code === "LIMIT_FILE_SIZE"
+      ? "The selected image is too large. Please choose a smaller image."
+      : "The selected image could not be processed. Please check it and try again.";
+    return res.status(400).json({ message });
+  }
+  if (Number.isInteger(error.http_code)) {
+    return res.status(502).json({
+      message: "Image upload failed. Check the Cloudinary configuration and try again.",
+    });
+  }
+
+  return res.status(500).json({ message: "An unexpected server error occurred." });
+});
 
 app.get("/", (req, res) => {
   res.send("Gold Threads Jewellery API is running...");

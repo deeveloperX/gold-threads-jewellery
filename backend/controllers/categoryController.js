@@ -1,11 +1,22 @@
 const Category = require("../models/Category");
 
+const handleCategoryError = (res, error, action, message) => {
+  console.error(`${action} failed:`, error);
+  if (error.name === "ValidationError" || error.name === "CastError") {
+    return res.status(400).json({ message: "Please check the category details and try again." });
+  }
+  if (error.code === 11000) {
+    return res.status(400).json({ message: "A category with these details already exists." });
+  }
+  return res.status(500).json({ message });
+};
+
 exports.getCategories = async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true }).sort({ displayOrder: 1, createdAt: -1 });
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleCategoryError(res, error, "Loading categories", "Unable to load categories right now. Please try again.");
   }
 };
 
@@ -14,7 +25,7 @@ exports.getPopularCategories = async (req, res) => {
     const categories = await Category.find({ isActive: true, showPopular: true }).sort({ displayOrder: 1 });
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleCategoryError(res, error, "Loading popular categories", "Unable to load collections right now. Please try again.");
   }
 };
 
@@ -36,7 +47,7 @@ exports.createCategory = async (req, res) => {
     const savedCategory = await category.save();
     res.status(201).json(savedCategory);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    handleCategoryError(res, error, "Creating category", "Unable to save this category. Please try again.");
   }
 };
 
@@ -61,7 +72,7 @@ exports.updateCategory = async (req, res) => {
     const updatedCategory = await category.save();
     res.json(updatedCategory);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    handleCategoryError(res, error, "Updating category", "Unable to save this category. Please try again.");
   }
 };
 
@@ -73,6 +84,6 @@ exports.deleteCategory = async (req, res) => {
     await category.deleteOne();
     res.json({ message: "Category deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleCategoryError(res, error, "Deleting category", "Unable to delete this category. Please try again.");
   }
 };

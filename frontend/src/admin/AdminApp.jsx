@@ -720,7 +720,7 @@ function ProductDialog({ product, categories, onClose, onSave }) {
     formData.set('name', form.name.trim());
     formData.set('category', form.category);
     formData.set('price', String(form.price));
-    if (form.originalPrice !== '') formData.set('originalPrice', String(form.originalPrice));
+    formData.set('originalPrice', String(form.originalPrice));
     formData.set('badge', form.badge);
     formData.set('material', form.material);
     formData.set('waterproof', String(form.waterproof));
