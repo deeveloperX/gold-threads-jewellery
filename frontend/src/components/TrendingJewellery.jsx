@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProductCard from './ProductCard';
+import ProductCard, { ProductCardSkeleton } from './ProductCard';
 import { productService } from '../services/productService';
 
 export default function FeaturedProducts() {
@@ -35,18 +35,24 @@ export default function FeaturedProducts() {
       </div>
 
       {error && <p className="alert alert-danger" role="alert">Could not load products: {error}</p>}
-      {loading && <p className="text-center text-muted" role="status">Loading jewellery…</p>}
       {!loading && !error && featuredProducts.length === 0 && (
         <p className="text-center text-muted" role="status">No products are available right now.</p>
       )}
-      <div className="row g-4">
-        {featuredProducts.map((product) => (
+      <div className="row g-4" role={loading ? 'status' : undefined}>
+        {loading && <span className="visually-hidden">Loading products</span>}
+        {loading
+          ? Array.from({ length: 4 }, (_, index) => (
+            <div key={`product-skeleton-${index}`} className="col-lg-3 col-md-6">
+              <ProductCardSkeleton />
+            </div>
+          ))
+          : featuredProducts.map((product) => (
           <div key={product.id} className="col-lg-3 col-md-6">
             <ProductCard
               product={product}
             />
           </div>
-        ))}
+          ))}
       </div>
     </section>
   );

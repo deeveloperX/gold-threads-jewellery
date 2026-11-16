@@ -83,7 +83,25 @@ export default function ProductDetails({ onAddToCart }) {
   const relatedError = isCurrentProduct ? productData.relatedError : '';
 
   if (loading) {
-    return <section className="container py-5 text-center" role="status">Loading product…</section>;
+    return (
+      <section className="container-xl py-4 py-lg-5" role="status">
+        <span className="visually-hidden">Loading product</span>
+        <div className="row g-4 g-lg-5 align-items-start">
+          <div className="col-lg-6">
+            <div className="product-details-skeleton-image product-skeleton-image" />
+          </div>
+          <div className="col-lg-6 py-3">
+            <div className="product-skeleton-line w-25 mb-4" />
+            <div className="product-skeleton-title w-75 mb-4" />
+            <div className="product-skeleton-line w-50 mb-4" />
+            <div className="product-skeleton-line w-100" />
+            <div className="product-skeleton-line w-100" />
+            <div className="product-skeleton-line w-75 mb-5" />
+            <div className="product-skeleton-line w-100 py-3" />
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (error || !product) {
@@ -129,11 +147,11 @@ export default function ProductDetails({ onAddToCart }) {
             </Link>
             <h1 className="h2 fw-normal mt-3 mb-3">{product.name}</h1>
 
-            <div className="d-flex align-items-center gap-2 mb-4">
+            {/* <div className="d-flex align-items-center gap-2 mb-4">
               <span className="text-warning" aria-label={`${product.rating} out of 5 stars`}>★</span>
               <span className="small">{product.rating.toFixed(1)}</span>
               <span className="text-muted small">({product.reviewsCount} reviews)</span>
-            </div>
+            </div> */}
 
             <div className="d-flex align-items-baseline gap-3 mb-4">
               <span className="fs-4 fw-semibold">PKR {product.price.toLocaleString()}</span>
@@ -148,7 +166,7 @@ export default function ProductDetails({ onAddToCart }) {
 
             <p className="small text-muted d-flex align-items-start gap-2 mb-4">
               <FiGift className="brand-gold-color flex-shrink-0" aria-hidden="true" />
-              <span>Free gift packaging is included in the product price, with extra charge.</span>
+              <span>Get your item ready to gift with free packaging included in your order.</span>
             </p>
 
             <button

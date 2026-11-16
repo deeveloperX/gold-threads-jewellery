@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ProductCard from '../components/ProductCard';
+import ProductCard, { ProductCardSkeleton } from '../components/ProductCard';
 import { Link, useSearchParams } from 'react-router';
 import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
@@ -65,16 +65,20 @@ export default function Shop() {
       </nav>
 
       {error && <p className="alert alert-danger" role="alert">Could not load the collection: {error}</p>}
-      {loading && <p className="text-center py-5" role="status">Loading jewellery…</p>}
 
-      <div className="row g-4">
-        {!loading && !error && categoryProducts.map((product) => (
-          <div key={product.id} className="col-lg-3 col-md-6">
-            <ProductCard
-              product={product}
-            />
-          </div>
-        ))}
+      <div className="row g-4" role={loading ? 'status' : undefined}>
+        {loading && <span className="visually-hidden">Loading products</span>}
+        {loading
+          ? Array.from({ length: 8 }, (_, index) => (
+            <div key={`product-skeleton-${index}`} className="col-lg-3 col-md-6">
+              <ProductCardSkeleton />
+            </div>
+          ))
+          : !error && categoryProducts.map((product) => (
+            <div key={product.id} className="col-lg-3 col-md-6">
+              <ProductCard product={product} />
+            </div>
+          ))}
         {!loading && !error && categoryProducts.length === 0 && (
           <div className="col-12 py-5 text-center">
             <h2 className="h4">No pieces found in this collection</h2>

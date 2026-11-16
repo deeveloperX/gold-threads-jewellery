@@ -842,6 +842,41 @@ button, input, select, .btn, .badge {
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
+.product-skeleton-image,
+.product-skeleton-title,
+.product-skeleton-line {
+  background: linear-gradient(90deg, #efede9 25%, #f8f6f2 50%, #efede9 75%);
+  background-size: 200% 100%;
+  animation: product-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.product-skeleton-image {
+  height: 310px;
+}
+
+.product-skeleton-title {
+  width: 62%;
+  height: 0.9rem;
+  margin-bottom: 0.5rem;
+  border-radius: 2px;
+}
+
+.product-skeleton-line {
+  height: 0.9rem;
+  border-radius: 2px;
+}
+
+.product-details-skeleton-image {
+  height: auto;
+  aspect-ratio: 5 / 6;
+}
+
+@keyframes product-skeleton-shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
 .product-card:hover {
   background-color: #F6F3ED !important; /* Slightly warmer tone on hover */
 }
@@ -896,7 +931,11 @@ button, input, select, .btn, .badge {
 @media (prefers-reduced-motion: reduce) {
   .product-card,
   .product-img-hover,
-  .product-card-overlay {
+  .product-card-overlay,
+  .product-skeleton-image,
+  .product-skeleton-title,
+  .product-skeleton-line {
     transition: none;
+    animation: none;
   }
 }
