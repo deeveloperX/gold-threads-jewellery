@@ -51,18 +51,14 @@ export default function AdminLogin() {
   return (
     <main className="admin-login-preview">
       <section className="admin-login-card">
-        <Link to="/" className="admin-login-brand">
-          <span className="admin-brand-mark">GT</span>
+        <div className="admin-login-brand">
+        <span className="admin-login-icon"><FiLock aria-hidden="true" /></span>
           <span className="admin-brand-copy">
             <strong>GOLD THREADS</strong>
-            <small>JEWELLERY · ADMIN</small>
+            <small>SECURE ADMIN ACCESS</small>
           </span>
-        </Link>
-        <span className="admin-login-icon"><FiLock aria-hidden="true" /></span>
-        <span className="admin-eyebrow">ADMIN ACCESS</span>
+        </div>
         <h1>Welcome back</h1>
-        <p>Sign in to manage your Gold Threads catalogue.</p>
-
         <form className="admin-login-form" onSubmit={handleSubmit}>
           {error && (
             <div className="admin-login-error" role="alert">
@@ -116,9 +112,9 @@ export default function AdminLogin() {
 
         <div className="admin-login-security">
           <FiLock aria-hidden="true" />
-          <span>Your token is kept in this browser tab and sent only to protected admin API endpoints.</span>
+          <span>Your admin session is limited to this browser tab.</span>
         </div>
-        <Link to="/" className="admin-login-back">Return to storefront</Link>
+        {/* <Link to="/" className="admin-login-back">Return to storefront</Link> */}
       </section>
     </main>
   );
