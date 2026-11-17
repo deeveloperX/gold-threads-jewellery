@@ -921,7 +921,54 @@ button, input, select, .btn, .badge {
 }
 
 .product-details-image-wrap {
+  overflow: hidden;
+  background-color: #f7f5ef;
   aspect-ratio: 5 / 6;
+}
+
+.product-details-video {
+  object-fit: contain;
+  background-color: var(--color-dark);
+}
+
+.product-gallery-thumbnails {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.75rem 0.1rem 0.2rem;
+}
+
+.product-gallery-thumbnail {
+  display: flex;
+  width: 4.5rem;
+  height: 5.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #e6e1d7;
+  background: #f7f5ef;
+  cursor: pointer;
+}
+
+.product-gallery-thumbnail.is-active {
+  border: 2px solid var(--color-gold);
+}
+
+.product-gallery-thumbnail > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-gallery-video-thumbnail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-dark);
+  font-size: 0.7rem;
 }
 
 .discover-image {

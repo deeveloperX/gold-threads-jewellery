@@ -53,6 +53,21 @@ const parseNumber = (value, fieldName) => {
   return parsedValue;
 };
 
+const parseExistingImages = (value) => {
+  let images;
+  try {
+    images = JSON.parse(value);
+  } catch {
+    throw new ProductInputError("Product images could not be updated. Please try again.");
+  }
+
+  if (!Array.isArray(images) || images.some((image) => typeof image !== "string" || !image.trim())) {
+    throw new ProductInputError("Product images could not be updated. Please try again.");
+  }
+
+  return images;
+};
+
 const handleProductError = (res, error, action, message) => {
   console.error(`${action} failed:`, error);
   if (error instanceof ProductInputError) {
@@ -101,8 +116,22 @@ exports.getAdminProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "Product image is required" });
+    const imageFiles = [...(req.files?.images || []), ...(req.files?.image || [])];
+    if (imageFiles.length === 0) {
+      return res.status(400).json({ message: "At least one product image is required" });
+    }
+    if (imageFiles.length > 5) {
+      throw new ProductInputError("Choose no more than five product images");
+    }
+    const existingImages = req.body.existingImages === undefined
+      ? []
+      : parseExistingImages(req.body.existingImages);
+    const productImages = [...existingImages, ...imageFiles.map((file) => file.path)];
+    if (productImages.length > 5) {
+      throw new ProductInputError("A product can have up to five images");
+    }
+    if (productImages.length === 0) {
+      return res.status(400).json({ message: "At least one product image is required" });
     }
 
     const productData = {};
@@ -114,7 +143,9 @@ exports.createProduct = async (req, res) => {
       }
     }
     productData.category = await validateCategory(req.body.category);
-    productData.image = req.file.path;
+    productData.images = productImages;
+    productData.image = productData.images[0];
+    if (req.files?.video?.[0]) productData.video = req.files.video[0].path;
 
     if (productData.waterproof !== undefined) {
       productData.waterproof = parseBoolean(productData.waterproof, "waterproof");
@@ -157,7 +188,28 @@ exports.updateProduct = async (req, res) => {
         product[field] = parseBoolean(req.body[field], field);
       }
     }
-    if (req.file) product.image = req.file.path;
+    const imageFiles = [...(req.files?.images || []), ...(req.files?.image || [])];
+    const existingImages = req.body.existingImages === undefined
+      ? imageFiles.length > 0
+        ? []
+        : product.images?.length
+          ? product.images
+          : [product.image]
+      : parseExistingImages(req.body.existingImages);
+    const productImages = [...existingImages, ...imageFiles.map((file) => file.path)];
+    if (productImages.length > 5) {
+      throw new ProductInputError("A product can have up to five images");
+    }
+    if (productImages.length === 0) {
+      throw new ProductInputError("A product must have at least one image");
+    }
+    product.images = productImages;
+    product.image = productImages[0];
+    if (req.files?.video?.[0]) {
+      product.video = req.files.video[0].path;
+    } else if (req.body.removeVideo !== undefined && parseBoolean(req.body.removeVideo, "removeVideo")) {
+      product.video = "";
+    }
 
     await product.save();
     res.json(product);

@@ -14,6 +14,8 @@ const productSchema = new mongoose.Schema(
     rating: { type: Number, min: 0, max: 5, default: 0 },
     reviewsCount: { type: Number, min: 0, default: 0 },
     image: { type: String, required: true },
+    images: { type: [String], default: [] },
+    video: { type: String, default: "" },
     description: { type: String, trim: true, default: "" },
     isActive: { type: Boolean, default: true },
   },

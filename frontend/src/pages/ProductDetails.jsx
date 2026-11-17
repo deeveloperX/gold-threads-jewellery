@@ -4,6 +4,7 @@ import {
   FiCreditCard,
   FiDroplet,
   FiGift,
+  FiPlay,
   FiShoppingBag,
   FiShield,
   FiTruck,
@@ -14,6 +15,7 @@ import { productService } from '../services/productService';
 
 export default function ProductDetails({ onAddToCart }) {
   const { productId } = useParams();
+  const [activeMediaKey, setActiveMediaKey] = useState('');
   const [productData, setProductData] = useState({
     productId: null,
     loading: true,
@@ -81,6 +83,20 @@ export default function ProductDetails({ onAddToCart }) {
   const relatedProducts = isCurrentProduct ? productData.relatedProducts : [];
   const error = isCurrentProduct ? productData.error : '';
   const relatedError = isCurrentProduct ? productData.relatedError : '';
+  const galleryImages = product
+    ? product.images?.filter(Boolean).length
+      ? product.images.filter(Boolean)
+      : [product.image]
+    : [];
+  const galleryMedia = [
+    ...galleryImages.map((src) => ({ type: 'image', src })),
+    ...(product?.video ? [{ type: 'video', src: product.video }] : []),
+  ];
+  const requestedMediaIndex = galleryMedia.findIndex(
+    (_, index) => activeMediaKey === `${productId}:${index}`,
+  );
+  const activeMediaIndex = requestedMediaIndex < 0 ? 0 : requestedMediaIndex;
+  const activeMedia = galleryMedia[activeMediaIndex] || galleryMedia[0];
 
   if (loading) {
     return (
@@ -133,8 +149,46 @@ export default function ProductDetails({ onAddToCart }) {
       <div className="row g-4 g-lg-5 align-items-start">
         <div className="col-lg-6">
           <div className="product-details-image-wrap">
-            <img className="w-100 h-100 object-fit-cover" src={product.image} alt={product.name} />
+            {activeMedia?.type === 'video' ? (
+              <video
+                className="product-details-video w-100 h-100"
+                src={activeMedia.src}
+                poster={product.image}
+                controls
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img
+                className="w-100 h-100 object-fit-cover"
+                src={activeMedia?.src || product.image}
+                alt={product.name}
+              />
+            )}
           </div>
+          {galleryMedia.length > 1 && (
+            <div className="product-gallery-thumbnails" role="group" aria-label="Product gallery">
+              {galleryMedia.map((media, index) => (
+                <button
+                  key={`${media.type}-${index}`}
+                  type="button"
+                  className={`product-gallery-thumbnail${activeMediaIndex === index ? ' is-active' : ''}`}
+                  aria-label={media.type === 'video' ? 'Show product video' : `Show product image ${index + 1}`}
+                  aria-pressed={activeMediaIndex === index}
+                  onClick={() => setActiveMediaKey(`${productId}:${index}`)}
+                >
+                  {media.type === 'video'
+                    ? (
+                      <span className="product-gallery-video-thumbnail">
+                        <FiPlay aria-hidden="true" />
+                        <span>Video</span>
+                      </span>
+                    )
+                    : <img src={media.src} alt="" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="col-lg-6">

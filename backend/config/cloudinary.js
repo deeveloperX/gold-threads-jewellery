@@ -11,10 +11,14 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "gold_threads_jewellery_web_media",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    transformation: [{ width: 1200, crop: "limit" }],
+  params: (req, file) => {
+    const isVideo = file.fieldname === "video";
+    return {
+      folder: "gold_threads_jewellery_web_media",
+      resource_type: isVideo ? "video" : "image",
+      allowed_formats: isVideo ? ["mp4", "webm"] : ["jpg", "jpeg", "png", "webp"],
+      ...(!isVideo && { transformation: [{ width: 1200, crop: "limit" }] }),
+    };
   },
 });
 

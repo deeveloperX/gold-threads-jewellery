@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FiAlertCircle,
   FiArchive,
@@ -137,7 +137,7 @@ function AdminWorkspace() {
           <span className="admin-brand-mark">GT</span>
           <span className="admin-brand-copy">
             <strong>GOLD THREADS</strong>
-            <small>JEWELLERY · ADMIN</small>
+            <small>JEWELLERY</small>
           </span>
         </Link>
 
@@ -154,24 +154,24 @@ function AdminWorkspace() {
               <Icon aria-hidden="true" />
               <span>{label}</span>
               {label === 'Products' && <span className="admin-nav-count">{products.length}</span>}
+              {label === 'Categories' && <span className="admin-nav-count">{categories.length}</span>}
             </NavLink>
           ))}
         </nav>
 
         <div className="admin-sidebar-bottom">
           <div className="admin-store-card">
-            <span className="admin-store-avatar">G</span>
             <span className="admin-store-copy">
-              <strong>Gold Threads</strong>
-              <small>Admin workspace</small>
+              <Link className="admin-back-link" to="/">
+                <FiEye aria-hidden="true" />
+                <span>View storefront</span>
+                <FiChevronRight className="admin-back-arrow" aria-hidden="true" />
+              </Link>
             </span>
-            <FiChevronDown aria-hidden="true" />
           </div>
-          <Link className="admin-back-link" to="/">
-            <FiEye aria-hidden="true" />
-            <span>View storefront</span>
-            <FiChevronRight className="admin-back-arrow" aria-hidden="true" />
-          </Link>
+          <button type="button" className="admin-logout-button" onClick={handleLogout}>
+            <FiLogOut aria-hidden="true" /> Sign out
+          </button>
         </div>
       </aside>
 
@@ -206,33 +206,12 @@ function AdminWorkspace() {
             <span className="admin-avatar" aria-label={`Signed in as ${admin?.name || 'admin'}`}>
               {(admin?.name || admin?.email || 'A').charAt(0).toUpperCase()}
             </span>
-            <button type="button" className="admin-logout-button" onClick={handleLogout}>
-              <FiLogOut aria-hidden="true" /> Sign out
-            </button>
           </div>
         </header>
 
         {logoutError && <div className="admin-logout-error" role="alert">{logoutError}</div>}
 
         <main className="admin-content">
-          <div className="admin-preview-notice" role="status">
-            <FiAlertCircle aria-hidden="true" />
-            <span>
-              <strong>Connected catalogue</strong>
-              <span className="admin-preview-notice-copy">
-                Catalogue data loads from your backend; image uploads are stored in Cloudinary.
-              </span>
-            </span>
-            <span className="admin-preview-badge">LIVE DATA</span>
-          </div>
-          <div className="admin-page-heading">
-            <div>
-              <span className="admin-eyebrow">{pageDetails[page].eyebrow}</span>
-              <h1>{pageDetails[page].title}</h1>
-              <p>{pageDetails[page].description}</p>
-            </div>
-          </div>
-
           {catalogLoading ? (
             <div className="admin-auth-state admin-catalog-state" aria-live="polite">
               <span className="admin-auth-spinner" aria-hidden="true">◌</span>
@@ -272,7 +251,7 @@ function AdminWorkspace() {
         </main>
         <footer className="admin-footer">
           <span>Gold Threads Jewellery</span>
-          <span>Admin access secured · Catalogue integration pending</span>
+          <span>Admin access secured</span>
         </footer>
       </div>
     </div>
@@ -312,7 +291,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
             <span className="admin-stat-label">Orders</span>
           </div>
           <div className="admin-stat-value">—</div>
-          <div className="admin-stat-meta">Order management not set up</div>
+          <div className="admin-stat-meta">Order management is not available</div>
         </div>
       </section>
 
@@ -324,7 +303,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
               <h2>Products in your catalogue</h2>
             </div>
             <button type="button" className="admin-text-button" onClick={() => onNavigate('/admin/products')}>
-              View all <FiArrowUpRight aria-hidden="true" />
+              <span>View all</span> <FiArrowUpRight aria-hidden="true" />
             </button>
           </div>
           <ProductTable products={recentProducts} compact />
@@ -367,7 +346,7 @@ function Dashboard({ products, categories, activeProducts, onNavigate }) {
           <small>Manage catalogue details and upload images directly from your device.</small>
         </span>
         <button type="button" className="admin-text-button" onClick={() => onNavigate('/admin/products')}>
-          Manage products <FiArrowUpRight aria-hidden="true" />
+          <span>Manage products</span> <FiArrowUpRight aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -658,7 +637,6 @@ function CategoriesPage({ categories, products, onCategoriesChange, token }) {
                   <div className="admin-category-card-info">
                     <div>
                       <h2>{category.name}</h2>
-                      <span>/{category.slug}</span>
                     </div>
                     <span className="admin-category-product-count">{count} items</span>
                   </div>
@@ -703,15 +681,56 @@ function ProductDialog({ product, categories, onClose, onSave }) {
     description: product?.description ?? '',
     isActive: product?.isActive ?? true,
   }));
-  const [imageFile, setImageFile] = useState(null);
+  const [existingImages, setExistingImages] = useState(() => (
+    product?.images?.length ? product.images : product?.image ? [product.image] : []
+  ));
+  const [imageFiles, setImageFiles] = useState([]);
+  const imageFilesRef = useRef(imageFiles);
+  const [videoFile, setVideoFile] = useState(null);
+  const [removeVideo, setRemoveVideo] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    imageFilesRef.current = imageFiles;
+  }, [imageFiles]);
+  useEffect(() => () => {
+    imageFilesRef.current.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
+  }, []);
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const handleImageFilesChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    const remainingSlots = 5 - existingImages.length - imageFiles.length;
+    if (files.length > remainingSlots) {
+      setError(`You can add up to ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}.`);
+      return;
+    }
+
+    setError('');
+    setImageFiles((current) => [
+      ...current,
+      ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
+    ]);
+  };
+  const removeExistingImage = (indexToRemove) => {
+    setExistingImages((current) => current.filter((_, index) => index !== indexToRemove));
+  };
+  const removeNewImage = (previewUrl) => {
+    URL.revokeObjectURL(previewUrl);
+    setImageFiles((current) => current.filter((item) => item.previewUrl !== previewUrl));
+  };
+  const handleVideoFileChange = (event) => {
+    setError('');
+    setVideoFile(event.target.files?.[0] || null);
+    setRemoveVideo(false);
+    event.target.value = '';
+  };
   const submit = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.category || Number(form.price) <= 0 || (!product && !imageFile)) {
-      setError('Add a name, category, price greater than zero, and an image.');
+    if (!form.name.trim() || !form.category || Number(form.price) <= 0
+      || existingImages.length + imageFiles.length === 0) {
+      setError('Add a name, category, price greater than zero, and at least one image.');
       return;
     }
     setError('');
@@ -727,7 +746,10 @@ function ProductDialog({ product, categories, onClose, onSave }) {
     formData.set('nonTarnish', String(form.nonTarnish));
     formData.set('description', form.description);
     formData.set('isActive', String(form.isActive));
-    if (imageFile) formData.set('image', imageFile);
+    formData.set('existingImages', JSON.stringify(existingImages));
+    imageFiles.forEach(({ file }) => formData.append('images', file));
+    if (videoFile) formData.set('video', videoFile);
+    if (removeVideo) formData.set('removeVideo', 'true');
     try {
       await onSave(formData);
     } catch (saveError) {
@@ -749,13 +771,13 @@ function ProductDialog({ product, categories, onClose, onSave }) {
           <div className="admin-form-field">
             <label htmlFor="product-category">Category</label>
             <select id="product-category" value={form.category} onChange={(event) => update('category', event.target.value)} required>
-            {categories
-              .filter((category) => category.isActive || category.name === product?.category)
-              .map((category) => (
-                <option key={category._id || category.id} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
+              {categories
+                .filter((category) => category.isActive || category.name === product?.category)
+                .map((category) => (
+                  <option key={category._id || category.id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
             </select>
           </div>
           <div className="admin-form-field">
@@ -776,13 +798,21 @@ function ProductDialog({ product, categories, onClose, onSave }) {
             <input id="product-original-price" type="number" min="0" value={form.originalPrice} onChange={(event) => update('originalPrice', event.target.value)} placeholder="Optional" />
           </div>
         </div>
-        <ImageUploadField
-          id="product-image"
-          label="Product image"
-          currentImage={product?.image}
-          file={imageFile}
-          onFileChange={setImageFile}
-          required={!product}
+        <ProductImagesUploadField
+          id="product-images"
+          existingImages={existingImages}
+          files={imageFiles}
+          onFilesChange={handleImageFilesChange}
+          onRemoveExisting={removeExistingImage}
+          onRemoveFile={removeNewImage}
+        />
+        <ProductVideoUploadField
+          id="product-video"
+          currentVideo={product?.video}
+          file={videoFile}
+          removeVideo={removeVideo}
+          onFileChange={handleVideoFileChange}
+          onRemoveVideoChange={setRemoveVideo}
         />
         <div className="admin-form-row">
           <div className="admin-form-field">
@@ -953,6 +983,109 @@ function ImageUploadField({ id, label, currentImage, file, onFileChange, require
         />
       </label>
       <small>JPEG, PNG, or WebP. Images upload securely to the store’s Cloudinary account.</small>
+    </div>
+  );
+}
+
+function ProductImagesUploadField({
+  id,
+  existingImages,
+  files,
+  onFilesChange,
+  onRemoveExisting,
+  onRemoveFile,
+}) {
+  const imageCount = existingImages.length + files.length;
+  const remainingSlots = 5 - imageCount;
+
+  return (
+    <div className="admin-form-field">
+      <label htmlFor={id}>Product images ({imageCount}/5)</label>
+      {imageCount > 0 && (
+        <div className="admin-product-media-grid">
+          {existingImages.map((src, index) => (
+            <div className="admin-product-media-item" key={`existing-${src}-${index}`}>
+              <img className="admin-product-media-preview" src={src} alt={`Product image ${index + 1}`} />
+              <button
+                type="button"
+                className="admin-product-media-remove"
+                aria-label={`Remove product image ${index + 1}`}
+                onClick={() => onRemoveExisting(index)}
+              >
+                <FiX aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+          {files.map(({ previewUrl }, index) => (
+            <div className="admin-product-media-item" key={previewUrl}>
+              <img
+                className="admin-product-media-preview"
+                src={previewUrl}
+                alt={`New product image ${existingImages.length + index + 1}`}
+              />
+              <button
+                type="button"
+                className="admin-product-media-remove"
+                aria-label={`Remove new product image ${existingImages.length + index + 1}`}
+                onClick={() => onRemoveFile(previewUrl)}
+              >
+                <FiX aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {remainingSlots > 0 && (
+        <label className="admin-image-upload-control" htmlFor={id}>
+          <FiUpload aria-hidden="true" />
+          <span>{imageCount ? 'Add more images' : 'Choose product images'}</span>
+          <input
+            id={id}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={onFilesChange}
+          />
+        </label>
+      )}
+      <small>
+        JPEG, PNG, or WebP. Add up to {remainingSlots} more. The first image is used in product listings.
+      </small>
+    </div>
+  );
+}
+
+function ProductVideoUploadField({ id, currentVideo, file, removeVideo, onFileChange, onRemoveVideoChange }) {
+  return (
+    <div className="admin-form-field">
+      <label htmlFor={id}>Product video (optional)</label>
+      {file && <small>Selected video: {file.name}</small>}
+      {currentVideo && !file && !removeVideo && (
+        <video className="admin-product-video-preview" src={currentVideo} controls preload="metadata" />
+      )}
+      <label className="admin-image-upload-control" htmlFor={id}>
+        <FiUpload aria-hidden="true" />
+        <span>{file ? 'Choose a different video' : 'Choose a video'}</span>
+        <input
+          id={id}
+          type="file"
+          accept="video/mp4,video/webm"
+          onChange={onFileChange}
+        />
+      </label>
+      {currentVideo && !file && (
+        <label className="admin-checkbox-field">
+          <input
+            type="checkbox"
+            checked={removeVideo}
+            onChange={(event) => onRemoveVideoChange(event.target.checked)}
+          />
+          <span>
+            <strong>Remove current video</strong>
+          </span>
+        </label>
+      )}
+      <small>One MP4 or WebM video. A new video replaces the current one.</small>
     </div>
   );
 }

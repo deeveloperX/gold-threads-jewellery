@@ -25,13 +25,13 @@ app.use((error, req, res, next) => {
   console.error("API request failed:", error);
   if (error instanceof multer.MulterError) {
     const message = error.code === "LIMIT_FILE_SIZE"
-      ? "The selected image is too large. Please choose a smaller image."
-      : "The selected image could not be processed. Please check it and try again.";
+      ? "The selected media file is too large. Please choose a smaller file."
+      : "The selected media file could not be processed. Please check it and try again.";
     return res.status(400).json({ message });
   }
   if (Number.isInteger(error.http_code)) {
     return res.status(502).json({
-      message: "Image upload failed. Check the Cloudinary configuration and try again.",
+      message: "Media upload failed. Please try again.",
     });
   }
 
