@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { PRODUCTS } from '../data/products';
 
 const CART_STORAGE_KEY = 'gold-threads-cart';
 
@@ -15,12 +14,20 @@ function readCart() {
     }
 
     return parsedCart.flatMap((entry) => {
-      if (!entry || !Number.isInteger(entry.productId) || !Number.isInteger(entry.quantity) || entry.quantity < 1) {
+      if (
+        !entry
+        || !entry.product
+        || typeof entry.product.id !== 'string'
+        || !entry.product.name
+        || typeof entry.product.price !== 'number'
+        || !entry.product.image
+        || !Number.isInteger(entry.quantity)
+        || entry.quantity < 1
+      ) {
         return [];
       }
 
-      const product = PRODUCTS.find((item) => item.id === entry.productId);
-      return product ? [{ ...product, quantity: entry.quantity }] : [];
+      return [{ ...entry.product, quantity: entry.quantity }];
     });
   } catch (error) {
     console.error('Unable to load the shopping bag from localStorage.', error);
@@ -33,8 +40,8 @@ export default function useCart() {
 
   useEffect(() => {
     try {
-      const savedCart = cart.map(({ id, quantity }) => ({
-        productId: id,
+      const savedCart = cart.map(({ quantity, ...product }) => ({
+        product,
         quantity,
       }));
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(savedCart));

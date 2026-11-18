@@ -1,0 +1,27 @@
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
+require("dotenv").config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req, file) => {
+    const isVideo = file.fieldname === "video";
+    return {
+      folder: "gold_threads_jewellery_web_media",
+      resource_type: isVideo ? "video" : "image",
+      allowed_formats: isVideo ? ["mp4", "webm"] : ["jpg", "jpeg", "png", "webp"],
+      ...(!isVideo && { transformation: [{ width: 1200, crop: "limit" }] }),
+    };
+  },
+});
+
+const upload = multer({ storage });
+
+module.exports = { cloudinary, upload };

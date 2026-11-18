@@ -1,30 +1,130 @@
+import { useEffect, useState } from 'react';
 import {
   FiArrowLeft,
   FiCreditCard,
   FiDroplet,
+  FiGift,
+  FiPlay,
   FiShoppingBag,
   FiShield,
   FiTruck,
 } from 'react-icons/fi';
 import { Link, useParams } from 'react-router';
 import ProductCard from '../components/ProductCard';
-import { PRODUCTS } from '../data/products';
+import { productService } from '../services/productService';
 
 export default function ProductDetails({ onAddToCart }) {
   const { productId } = useParams();
-  const product = PRODUCTS.find((item) => item.id === Number(productId));
-  const relatedProducts = product
-    ? [
-        ...PRODUCTS.filter((item) => item.id !== product.id && item.category === product.category),
-        ...PRODUCTS.filter((item) => item.id !== product.id && item.category !== product.category),
-      ].slice(0, 3)
-    : [];
+  const [activeMediaKey, setActiveMediaKey] = useState('');
+  const [productData, setProductData] = useState({
+    productId: null,
+    loading: true,
+    product: null,
+    relatedProducts: [],
+    error: '',
+    relatedError: '',
+  });
 
-  if (!product) {
+  useEffect(() => {
+    let active = true;
+    productService.getProduct(productId)
+      .then((activeProduct) => {
+        if (!active) return;
+        setProductData({
+          productId,
+          loading: false,
+          product: activeProduct,
+          relatedProducts: [],
+          error: '',
+          relatedError: '',
+        });
+        productService.getProducts({ category: activeProduct.category })
+          .then((products) => {
+            if (active) {
+              setProductData((current) => current.productId === productId
+                ? {
+                    ...current,
+                    relatedProducts: products
+                      .filter((item) => item.id !== activeProduct.id)
+                      .slice(0, 3),
+                  }
+                : current);
+            }
+          })
+          .catch((requestError) => {
+            if (active) {
+              setProductData((current) => current.productId === productId
+                ? { ...current, relatedError: requestError.message }
+                : current);
+            }
+          });
+      })
+      .catch((requestError) => {
+        if (active) {
+          setProductData({
+            productId,
+            loading: false,
+            product: null,
+            relatedProducts: [],
+            error: requestError.status === 404 ? 'Product not found' : requestError.message,
+            relatedError: '',
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [productId]);
+
+  const isCurrentProduct = productData.productId === productId;
+  const loading = !isCurrentProduct || productData.loading;
+  const product = isCurrentProduct ? productData.product : null;
+  const relatedProducts = isCurrentProduct ? productData.relatedProducts : [];
+  const error = isCurrentProduct ? productData.error : '';
+  const relatedError = isCurrentProduct ? productData.relatedError : '';
+  const galleryImages = product
+    ? product.images?.filter(Boolean).length
+      ? product.images.filter(Boolean)
+      : [product.image]
+    : [];
+  const galleryMedia = [
+    ...galleryImages.map((src) => ({ type: 'image', src })),
+    ...(product?.video ? [{ type: 'video', src: product.video }] : []),
+  ];
+  const requestedMediaIndex = galleryMedia.findIndex(
+    (_, index) => activeMediaKey === `${productId}:${index}`,
+  );
+  const activeMediaIndex = requestedMediaIndex < 0 ? 0 : requestedMediaIndex;
+  const activeMedia = galleryMedia[activeMediaIndex] || galleryMedia[0];
+
+  if (loading) {
+    return (
+      <section className="container-xl py-4 py-lg-5" role="status">
+        <span className="visually-hidden">Loading product</span>
+        <div className="row g-4 g-lg-5 align-items-start">
+          <div className="col-lg-6">
+            <div className="product-details-skeleton-image product-skeleton-image" />
+          </div>
+          <div className="col-lg-6 py-3">
+            <div className="product-skeleton-line w-25 mb-4" />
+            <div className="product-skeleton-title w-75 mb-4" />
+            <div className="product-skeleton-line w-50 mb-4" />
+            <div className="product-skeleton-line w-100" />
+            <div className="product-skeleton-line w-100" />
+            <div className="product-skeleton-line w-75 mb-5" />
+            <div className="product-skeleton-line w-100 py-3" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !product) {
     return (
       <section className="container py-5 text-center">
-        <h1 className="h2 mb-3">Product not found</h1>
-        <p className="text-muted mb-4">This piece may no longer be available.</p>
+        <h1 className="h2 mb-3">{error === 'Product not found' ? error : 'Could not load this product'}</h1>
+        <p className="text-muted mb-4">{error || 'This piece may no longer be available.'}</p>
         <Link to="/shop" className="btn btn-dark rounded-pill px-4">
           Return to Shop
         </Link>
@@ -49,8 +149,46 @@ export default function ProductDetails({ onAddToCart }) {
       <div className="row g-4 g-lg-5 align-items-start">
         <div className="col-lg-6">
           <div className="product-details-image-wrap">
-            <img className="w-100 h-100 object-fit-cover" src={product.image} alt={product.name} />
+            {activeMedia?.type === 'video' ? (
+              <video
+                className="product-details-video w-100 h-100"
+                src={activeMedia.src}
+                poster={product.image}
+                controls
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img
+                className="w-100 h-100 object-fit-cover"
+                src={activeMedia?.src || product.image}
+                alt={product.name}
+              />
+            )}
           </div>
+          {galleryMedia.length > 1 && (
+            <div className="product-gallery-thumbnails" role="group" aria-label="Product gallery">
+              {galleryMedia.map((media, index) => (
+                <button
+                  key={`${media.type}-${index}`}
+                  type="button"
+                  className={`product-gallery-thumbnail${activeMediaIndex === index ? ' is-active' : ''}`}
+                  aria-label={media.type === 'video' ? 'Show product video' : `Show product image ${index + 1}`}
+                  aria-pressed={activeMediaIndex === index}
+                  onClick={() => setActiveMediaKey(`${productId}:${index}`)}
+                >
+                  {media.type === 'video'
+                    ? (
+                      <span className="product-gallery-video-thumbnail">
+                        <FiPlay aria-hidden="true" />
+                        <span>Video</span>
+                      </span>
+                    )
+                    : <img src={media.src} alt="" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="col-lg-6">
@@ -63,11 +201,11 @@ export default function ProductDetails({ onAddToCart }) {
             </Link>
             <h1 className="h2 fw-normal mt-3 mb-3">{product.name}</h1>
 
-            <div className="d-flex align-items-center gap-2 mb-4">
+            {/* <div className="d-flex align-items-center gap-2 mb-4">
               <span className="text-warning" aria-label={`${product.rating} out of 5 stars`}>★</span>
               <span className="small">{product.rating.toFixed(1)}</span>
               <span className="text-muted small">({product.reviewsCount} reviews)</span>
-            </div>
+            </div> */}
 
             <div className="d-flex align-items-baseline gap-3 mb-4">
               <span className="fs-4 fw-semibold">PKR {product.price.toLocaleString()}</span>
@@ -79,6 +217,11 @@ export default function ProductDetails({ onAddToCart }) {
             </div>
 
             <p className="text-secondary lh-lg mb-4">{product.description}</p>
+
+            <p className="small text-muted d-flex align-items-start gap-2 mb-4">
+              <FiGift className="brand-gold-color flex-shrink-0" aria-hidden="true" />
+              <span>Get your item ready to gift with free packaging included in your order.</span>
+            </p>
 
             <button
               type="button"
@@ -167,6 +310,7 @@ export default function ProductDetails({ onAddToCart }) {
           </div>
         </section>
       )}
+      {relatedError && <p className="alert alert-danger mt-4" role="alert">Could not load related products: {relatedError}</p>}
     </section>
   );
 }

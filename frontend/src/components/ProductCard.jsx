@@ -29,3 +29,12 @@ export default function ProductCard({ product }) {
     </Link>
   );
 }
+
+export function ProductCardSkeleton() {
+  return (
+    <div className="product-card-skeleton h-100 d-flex flex-column align-items-center" aria-hidden="true">
+      <div className="product-skeleton-image w-100 mb-3" />
+      <div className="product-skeleton-title" />
+    </div>
+  );
+}

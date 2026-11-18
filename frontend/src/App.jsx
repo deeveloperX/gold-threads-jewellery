@@ -1,10 +1,12 @@
 import { useLayoutEffect, useState } from 'react';
 import { FloatingWhatsApp } from 'react-floating-whatsapp';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
-// import AnnouncementBar from './components/AnnouncementBar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
+import AdminApp from './admin/AdminApp';
+import AdminLogin from './admin/pages/AdminLogin';
+import { AdminAuthProvider } from './admin/auth/AdminAuthContext';
 import Home from './pages/Home';
 import Policy from './pages/Policy';
 import Shop from './pages/Shop';
@@ -14,6 +16,23 @@ import { CLIENT_INFO } from './data/products';
 import useCart from './hooks/useCart';
 
 export default function App() {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={(
+          <AdminAuthProvider>
+            <AdminLogin />
+          </AdminAuthProvider>
+        )}
+      />
+      <Route path="/admin/*" element={<AdminApp />} />
+      <Route path="/*" element={<Storefront />} />
+    </Routes>
+  );
+}
+
+function Storefront() {
   const { pathname, search } = useLocation();
   const { cart, itemCount, addToCart, updateQuantity, removeFromCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -30,7 +49,6 @@ export default function App() {
 
   return (
     <div className={`min-vh-100 d-flex flex-column bg-light${isHomePage ? ' position-relative' : ''}`}>
-      {/* <AnnouncementBar /> */}
       <Navbar
         cartCount={itemCount}
         setIsCartOpen={setIsCartOpen}

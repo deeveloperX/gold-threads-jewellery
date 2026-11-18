@@ -842,6 +842,41 @@ button, input, select, .btn, .badge {
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
+.product-skeleton-image,
+.product-skeleton-title,
+.product-skeleton-line {
+  background: linear-gradient(90deg, #efede9 25%, #f8f6f2 50%, #efede9 75%);
+  background-size: 200% 100%;
+  animation: product-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.product-skeleton-image {
+  height: 310px;
+}
+
+.product-skeleton-title {
+  width: 62%;
+  height: 0.9rem;
+  margin-bottom: 0.5rem;
+  border-radius: 2px;
+}
+
+.product-skeleton-line {
+  height: 0.9rem;
+  border-radius: 2px;
+}
+
+.product-details-skeleton-image {
+  height: auto;
+  aspect-ratio: 5 / 6;
+}
+
+@keyframes product-skeleton-shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
 .product-card:hover {
   background-color: #F6F3ED !important; /* Slightly warmer tone on hover */
 }
@@ -886,7 +921,54 @@ button, input, select, .btn, .badge {
 }
 
 .product-details-image-wrap {
+  overflow: hidden;
+  background-color: #f7f5ef;
   aspect-ratio: 5 / 6;
+}
+
+.product-details-video {
+  object-fit: contain;
+  background-color: var(--color-dark);
+}
+
+.product-gallery-thumbnails {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.75rem 0.1rem 0.2rem;
+}
+
+.product-gallery-thumbnail {
+  display: flex;
+  width: 4.5rem;
+  height: 5.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #e6e1d7;
+  background: #f7f5ef;
+  cursor: pointer;
+}
+
+.product-gallery-thumbnail.is-active {
+  border: 2px solid var(--color-gold);
+}
+
+.product-gallery-thumbnail > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-gallery-video-thumbnail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-dark);
+  font-size: 0.7rem;
 }
 
 .discover-image {
@@ -896,7 +978,11 @@ button, input, select, .btn, .badge {
 @media (prefers-reduced-motion: reduce) {
   .product-card,
   .product-img-hover,
-  .product-card-overlay {
+  .product-card-overlay,
+  .product-skeleton-image,
+  .product-skeleton-title,
+  .product-skeleton-line {
     transition: none;
+    animation: none;
   }
 }
