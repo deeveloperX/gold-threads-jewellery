@@ -27,6 +27,11 @@ const protectAdmin = async (req, res, next) => {
   if (!admin) {
     return res.status(401).json({ message: "Admin authorization failed" });
   }
+  if (admin.passwordChangedAt
+    && typeof decoded.iat === "number"
+    && admin.passwordChangedAt.getTime() > decoded.iat * 1000) {
+    return res.status(401).json({ message: "Password changed. Please sign in again." });
+  }
 
   req.admin = admin;
   return next();

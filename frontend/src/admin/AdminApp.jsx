@@ -15,6 +15,7 @@ import {
   FiMenu,
   FiPlus,
   FiSearch,
+  FiSettings,
   FiShield,
   FiTag,
   FiTrash2,
@@ -27,6 +28,7 @@ import { AdminAuthProvider } from './auth/AdminAuthContext';
 import ProtectedAdminRoute from './auth/ProtectedAdminRoute';
 import useAdminAuth from './auth/useAdminAuth';
 import AdminLogin from './pages/AdminLogin';
+import StoreSettings from './pages/StoreSettings';
 import { categoryService } from '../services/categoryService';
 import { authService } from '../services/authService';
 import { productService } from '../services/productService';
@@ -38,16 +40,25 @@ const pageDetails = {
     eyebrow: 'YOUR STORE AT A GLANCE',
     title: 'Store overview',
     description: 'A snapshot of your jewellery catalogue.',
+    section: 'Workspace',
   },
   '/admin/products': {
     eyebrow: 'CATALOGUE',
     title: 'Products',
     description: 'Manage the pieces in your collection.',
+    section: 'Workspace',
   },
   '/admin/categories': {
     eyebrow: 'ORGANIZATION',
     title: 'Categories',
     description: 'Keep your collections beautifully organized.',
+    section: 'Workspace',
+  },
+  '/admin/settings': {
+    eyebrow: 'SYSTEM',
+    title: 'Store settings',
+    description: 'Shipping, cash on delivery, and the credentials used to sign in.',
+    section: 'System',
   },
 };
 
@@ -55,6 +66,10 @@ const navigation = [
   { label: 'Overview', path: '/admin', icon: FiGrid, end: true },
   { label: 'Products', path: '/admin/products', icon: FiBox },
   { label: 'Categories', path: '/admin/categories', icon: FiLayers },
+];
+
+const systemNavigation = [
+  { label: 'Store Settings', path: '/admin/settings', icon: FiSettings },
 ];
 
 export default function AdminApp() {
@@ -83,7 +98,7 @@ function AdminRoutes() {
 function AdminWorkspace() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { admin, logout } = useAdminAuth();
+  const { admin, logout, refreshProfile } = useAdminAuth();
   const token = authService.getToken();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -160,17 +175,27 @@ function AdminWorkspace() {
         </nav>
 
         <div className="admin-sidebar-bottom">
-          <div className="admin-store-card">
-            <span className="admin-store-copy">
-              <Link className="admin-back-link" to="/">
-                <FiEye aria-hidden="true" />
-                <span>View storefront</span>
-                <FiChevronRight className="admin-back-arrow" aria-hidden="true" />
-              </Link>
-            </span>
-          </div>
-          <button type="button" className="admin-logout-button" onClick={handleLogout}>
-            <FiLogOut aria-hidden="true" /> Sign out
+          <div className="admin-side-label">SYSTEM & FOOTER</div>
+          <nav className="admin-navigation admin-system-nav" aria-label="System">
+            {systemNavigation.map(({ label, path, icon: Icon }) => (
+              <NavLink
+                key={path}
+                to={path}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}
+              >
+                <Icon aria-hidden="true" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+          <Link className="admin-nav-link admin-sidebar-action" to="/">
+            <FiEye aria-hidden="true" />
+            <span>View storefront</span>
+          </Link>
+          <button type="button" className="admin-nav-link admin-sidebar-action admin-logout-button" onClick={handleLogout}>
+            <FiLogOut aria-hidden="true" />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
@@ -196,9 +221,9 @@ function AdminWorkspace() {
             <FiMenu aria-hidden="true" />
           </button>
           <div className="admin-breadcrumb">
-            <span>Workspace</span>
+            <span>{pageDetails[page].section}</span>
             <FiChevronRight aria-hidden="true" />
-            <strong>{page === '/admin' ? 'Overview' : page.slice('/admin/'.length)}</strong>
+            <strong>{pageDetails[page].title}</strong>
           </div>
           <div className="admin-topbar-actions">
             <span className="admin-live-indicator"><i /> Signed in</span>
@@ -212,7 +237,13 @@ function AdminWorkspace() {
         {logoutError && <div className="admin-logout-error" role="alert">{logoutError}</div>}
 
         <main className="admin-content">
-          {catalogLoading ? (
+          {page === '/admin/settings' ? (
+            <StoreSettings
+              token={token}
+              admin={admin}
+              onCredentialsSaved={refreshProfile}
+            />
+          ) : catalogLoading ? (
             <div className="admin-auth-state admin-catalog-state" aria-live="polite">
               <span className="admin-auth-spinner" aria-hidden="true">◌</span>
               <p>Loading your catalogue…</p>

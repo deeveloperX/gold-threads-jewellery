@@ -23,6 +23,15 @@ export const authService = {
     return apiRequest('/auth/profile', { authToken: token });
   },
 
+  updateCredentials(token, credentials) {
+    return apiRequest('/auth/credentials', {
+      method: 'PUT',
+      authToken: token,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+  },
+
   logout() {
     sessionStorage.removeItem(TOKEN_KEY);
   },

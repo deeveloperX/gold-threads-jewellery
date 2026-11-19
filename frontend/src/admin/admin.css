@@ -164,6 +164,12 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 22px;
+}
+
+.admin-system-nav {
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .admin-store-card {
@@ -287,21 +293,13 @@
 }
 
 .admin-logout-button {
-  display: inline-flex;
-  min-height: 31px;
   width: 100%;
-  align-items: center;
-  gap: 10px;
-  padding: 0 9px;
-  border: 1px solid #e8e6df;
-  border-radius: 4px;
-  background: #fff;
-  color: #686a62;
-  font-size: 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .admin-logout-button:hover {
-  border-color: #d7d4ca;
   background: #faf6f6;
   color: #40433d;
 }
@@ -1472,7 +1470,8 @@ button.admin-status-pill {
   line-height: 1.5;
 }
 
-.admin-form-error {
+.admin-form-error,
+.admin-form-success {
   margin: 0;
   padding: 9px 10px;
   border: 1px solid #ecd7d3;
@@ -1480,6 +1479,47 @@ button.admin-status-pill {
   background: #fcf3f1;
   color: #985046;
   font-size: 9px;
+}
+
+.admin-form-success {
+  border-color: #d5e3d6;
+  background: #f3f8f3;
+  color: #2f5a3a;
+}
+
+.admin-settings-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-settings-panel .admin-panel-heading > svg {
+  color: #8d8a7d;
+  font-size: 18px;
+}
+
+.admin-settings-lead,
+.admin-settings-status {
+  margin: -4px 0 14px;
+  padding: 0 19px;
+  color: #85857d;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.admin-settings-panel .admin-form {
+  padding: 0 19px 19px;
+}
+
+.admin-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (min-width: 980px) {
+  .admin-settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .admin-checkbox-field {

@@ -21,7 +21,7 @@ export default function AdminLogin() {
       await login(email.trim(), password);
       const returnTo = new URLSearchParams(location.search).get('next')
         || location.state?.from?.pathname;
-      const allowedDestinations = ['/admin', '/admin/products', '/admin/categories'];
+      const allowedDestinations = ['/admin', '/admin/products', '/admin/categories', '/admin/settings'];
       navigate(allowedDestinations.includes(returnTo) ? returnTo : '/admin', { replace: true });
     } catch (loginError) {
       setError(loginError.message);
