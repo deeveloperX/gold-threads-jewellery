@@ -9,7 +9,13 @@ import {
 import { SiWhatsapp } from 'react-icons/si';
 import { CLIENT_INFO } from '../data/products';
 
-const policies = [
+const paymentDetails = (codEnabled) => (
+  codEnabled
+    ? ['Cash on Delivery (COD)', 'Online bank transfer (Screenshot required for order confirmation)']
+    : ['Online bank transfer (Screenshot required for order confirmation)']
+);
+
+const policies = (codEnabled) => [
   {
     title: 'Delivery across Pakistan',
     icon: FiTruck,
@@ -23,7 +29,7 @@ const policies = [
     title: 'Payment options',
     icon: FiCreditCard,
     description: 'Choose the payment option that works best for you.',
-    details: ['Cash on Delivery (COD)', 'Credit or debit card', 'Online Bank Tansfer'],
+    details: paymentDetails(codEnabled),
   },
   {
     title: 'Everyday-ready jewellery',
@@ -34,7 +40,7 @@ const policies = [
   },
 ];
 
-export default function Policy() {
+export default function Policy({ codEnabled = true }) {
   return (
     <main className="store-policy">
       <div className="container py-5">
@@ -60,7 +66,7 @@ export default function Policy() {
         </section>
 
         <section className="row g-3 g-lg-4 mb-5" aria-label="Store policies">
-          {policies.map(({ title, icon: Icon, description, details }) => (
+          {policies(codEnabled).map(({ title, icon: Icon, description, details }) => (
             <div className="col-md-4" key={title}>
               <article className="store-policy-card h-100 p-4">
                 <Icon className="store-policy-icon mb-3" size={24} aria-hidden="true" />

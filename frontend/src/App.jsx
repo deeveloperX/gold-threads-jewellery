@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { FloatingWhatsApp } from 'react-floating-whatsapp';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import Navbar from './components/Navbar';
@@ -14,6 +14,7 @@ import ProductDetails from './pages/ProductDetails';
 import Contact from './pages/Contact';
 import { CLIENT_INFO } from './data/products';
 import useCart from './hooks/useCart';
+import { settingsService } from './services/settingsService';
 
 export default function App() {
   return (
@@ -36,11 +37,28 @@ function Storefront() {
   const { pathname, search } = useLocation();
   const { cart, itemCount, addToCart, updateQuantity, removeFromCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [storeSettings, setStoreSettings] = useState({ shippingFee: 0, codEnabled: true });
   const isHomePage = pathname === '/';
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname, search]);
+
+  useEffect(() => {
+    let active = true;
+    settingsService.getSettings()
+      .then((settings) => {
+        if (!active) return;
+        setStoreSettings({
+          shippingFee: Number(settings.shippingFee) || 0,
+          codEnabled: Boolean(settings.codEnabled),
+        });
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -64,9 +82,12 @@ function Storefront() {
           <Route path="/shop" element={<Shop />} />
           <Route
             path="/product/:productId"
-            element={<ProductDetails onAddToCart={handleAddToCart} />}
+            element={<ProductDetails
+              onAddToCart={handleAddToCart}
+              codEnabled={storeSettings.codEnabled}
+            />}
           />
-          <Route path="/policy" element={<Policy />} />
+          <Route path="/policy" element={<Policy codEnabled={storeSettings.codEnabled} />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -89,6 +110,8 @@ function Storefront() {
         cart={cart}
         updateQuantity={updateQuantity}
         removeItem={removeFromCart}
+        shippingFee={storeSettings.shippingFee}
+        codEnabled={storeSettings.codEnabled}
       />
     </div>
   );

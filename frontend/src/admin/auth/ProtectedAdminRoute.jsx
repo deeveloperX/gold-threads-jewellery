@@ -32,7 +32,7 @@ export default function ProtectedAdminRoute({ children }) {
     const returnTo = `${location.pathname}${location.search}`;
     return (
       <Navigate
-        to={`/login?next=${encodeURIComponent(returnTo)}`}
+        to={`/admin/login?next=${encodeURIComponent(returnTo)}`}
         replace
         state={{ from: location }}
       />

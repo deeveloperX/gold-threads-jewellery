@@ -13,7 +13,7 @@ import { Link, useParams } from 'react-router';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/productService';
 
-export default function ProductDetails({ onAddToCart }) {
+export default function ProductDetails({ onAddToCart, codEnabled = true }) {
   const { productId } = useParams();
   const [activeMediaKey, setActiveMediaKey] = useState('');
   const [productData, setProductData] = useState({
@@ -264,7 +264,11 @@ export default function ProductDetails({ onAddToCart }) {
           <div className="h-100 p-3 p-md-4 bg-white border">
             <FiCreditCard className="brand-gold-color mb-3" size={22} aria-hidden="true" />
             <h2 className="h6 fw-semibold">Flexible payment</h2>
-            <p className="small text-muted mb-0">Cash on delivery and card payments accepted.</p>
+            <p className="small text-muted mb-0">
+              {codEnabled
+                ? 'Cash on delivery and online bank transfer accepted.'
+                : 'Online bank transfer accepted.'}
+            </p>
           </div>
         </div>
         <div className="col">

@@ -10,9 +10,23 @@ import { Link } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
 import { CLIENT_INFO } from '../data/products';
 
-export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, removeItem }) {
+const formatRupees = (amount) => `PKR ${amount.toLocaleString()}`;
+
+export default function CartDrawer({
+  isOpen,
+  onClose,
+  cart,
+  updateQuantity,
+  removeItem,
+  shippingFee = 0,
+  codEnabled = true,
+}) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = subtotal + shippingFee;
+  const paymentMethod = codEnabled
+    ? 'Cash on Delivery / Online payment (with screenshot)'
+    : 'Online payments only (with screenshot)';
 
   const handleWhatsAppCheckout = () => {
     if (cart.length === 0) return;
@@ -21,7 +35,7 @@ export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, remo
     cart.forEach((item, index) => {
       message += `${index + 1}. *${item.name}*\n   Qty: ${item.quantity} x PKR ${item.price.toLocaleString()} = PKR ${(item.price * item.quantity).toLocaleString()}\n`;
     });
-    message += `\n*Total Amount:* PKR ${total.toLocaleString()}\n*Payment Method:* Cash on Delivery / Card\n*Delivery Address:* [Please enter your full address & city here]`;
+    message += `\n*Subtotal:* ${formatRupees(subtotal)}\n*Shipping:* ${shippingFee === 0 ? 'Free' : formatRupees(shippingFee)}\n*Total Amount:* ${formatRupees(total)}\n*Payment Method:* ${paymentMethod}\n*Delivery Address:* [Please enter your full address & city here]`;
 
     const encoded = encodeURIComponent(message);
     window.open(
@@ -126,9 +140,17 @@ export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, remo
                   Please note: <Link to="/policy" className="text-secondary">Review our return policy</Link> before ordering.
                 </p>
               </div>
-              <div className="d-flex justify-content-between align-items-center mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="cart-subtotal-label">Subtotal</span>
-                <span className="cart-subtotal">PKR {total.toLocaleString()}</span>
+                <span className="cart-subtotal">{formatRupees(subtotal)}</span>
+              </div>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="cart-subtotal-label">Shipping</span>
+                <span className="cart-subtotal">{shippingFee === 0 ? 'Free' : formatRupees(shippingFee)}</span>
+              </div>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <span className="cart-subtotal-label">Total</span>
+                <span className="cart-subtotal">{formatRupees(total)}</span>
               </div>
               <button
                 className="cart-checkout-button btn w-100 d-flex align-items-center justify-content-center gap-2"
@@ -137,7 +159,9 @@ export default function CartDrawer({ isOpen, onClose, cart, updateQuantity, remo
                 <SiWhatsapp size={18} aria-hidden="true" />
                 Checkout on WhatsApp
               </button>
-              <p className="cart-payment-note text-center mb-0 mt-2">Cash on delivery or card accepted</p>
+              <p className="cart-payment-note text-center mb-0 mt-2">
+                {codEnabled ? 'Cash on delivery / Online payment (with screenshot)' : 'Online payment only (with screenshot)'}
+              </p>
           </div>
         )}
       </div>
